@@ -120,6 +120,10 @@
     .sidebar.show {
         left: 0;
     }
+
+    .sidebar-logo {
+        margin-top: 50px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -130,6 +134,7 @@
 
     .sidebar-logo {
         width: 120px;
+        margin-top: 50px;
     }
 
     .menu-item {
