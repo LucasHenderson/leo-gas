@@ -2,10 +2,12 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProdutoService } from '../../services/produto.service';
-import { Produto, ProdutoFormData, PrecoPorPagamento } from '../../models/produto.model';
+import { VariavelEstoqueService } from '../../services/variavel-estoque.service';
+import { Produto, ProdutoFormData, PrecoPorPagamento, VinculoEstoque, TipoInteracaoEstoque } from '../../models/produto.model';
+import { VariavelEstoque, VariavelEstoqueFormData } from '../../models/variavel-estoque.model';
 
-type ModalType = 'create' | 'edit' | 'delete' | null;
-type SortOrder = 'maior-estoque' | 'menor-estoque' | 'nenhum';
+type ModalType = 'create' | 'edit' | 'delete' | 'create-variavel' | 'edit-variavel' | 'delete-variavel' | null;
+type SortOrder = 'maior-vendas' | 'menor-vendas' | 'nenhum';
 
 @Component({
   selector: 'app-produtos',
@@ -15,6 +17,7 @@ type SortOrder = 'maior-estoque' | 'menor-estoque' | 'nenhum';
 })
 export class Produtos {
   private produtoService = inject(ProdutoService);
+  private variavelEstoqueService = inject(VariavelEstoqueService);
 
   // Paginação
   currentPage = signal(1);
@@ -23,8 +26,9 @@ export class Produtos {
   // Modal
   modalType = signal<ModalType>(null);
   selectedProduto = signal<Produto | null>(null);
+  selectedVariavel = signal<VariavelEstoque | null>(null);
   
-  // Formulário
+  // Formulário de Produto
   formData = signal<ProdutoFormData>({
     nome: '',
     precos: {
@@ -33,7 +37,7 @@ export class Produtos {
       dinheiro: 0,
       pix: 0
     },
-    quantidadeEstoque: 0
+    vinculos: []
   });
   
   formErrors = signal({
@@ -42,18 +46,43 @@ export class Produtos {
     debito: '',
     dinheiro: '',
     pix: '',
-    quantidadeEstoque: ''
+    vinculos: ''
+  });
+
+  // Formulário de Variável de Estoque
+  variavelFormData = signal<VariavelEstoqueFormData>({
+    nome: '',
+    quantidade: 0
+  });
+
+  variavelFormErrors = signal({
+    nome: '',
+    quantidade: ''
   });
 
   // Busca e ordenação
   searchTerm = signal('');
   sortOrder = signal<SortOrder>('nenhum');
 
+  // Filtro de período para vendas
+  dataInicio = signal<Date | null>(null);
+  dataFim = signal<Date | null>(null);
+
+  // Seção de variáveis expandida
+  variaveisExpanded = signal(false);
+
   // Computed
   produtos = this.produtoService.getProdutos();
+  variaveis = this.variavelEstoqueService.getVariaveis();
+
+  // Cache de vendas por período
+  vendasPorPeriodo = computed(() => {
+    return this.produtoService.getTodosVendasPorPeriodo(this.dataInicio(), this.dataFim());
+  });
   
   filteredProdutos = computed(() => {
     let list = this.produtos();
+    const vendasMap = this.vendasPorPeriodo();
     
     // Busca por nome
     const search = this.searchTerm().toLowerCase().trim();
@@ -63,12 +92,16 @@ export class Produtos {
       );
     }
     
-    // Ordenação por estoque
+    // Ordenação por vendas
     const order = this.sortOrder();
-    if (order === 'maior-estoque') {
-      list = [...list].sort((a, b) => b.quantidadeEstoque - a.quantidadeEstoque);
-    } else if (order === 'menor-estoque') {
-      list = [...list].sort((a, b) => a.quantidadeEstoque - b.quantidadeEstoque);
+    if (order === 'maior-vendas') {
+      list = [...list].sort((a, b) => 
+        (vendasMap.get(b.id) || 0) - (vendasMap.get(a.id) || 0)
+      );
+    } else if (order === 'menor-vendas') {
+      list = [...list].sort((a, b) => 
+        (vendasMap.get(a.id) || 0) - (vendasMap.get(b.id) || 0)
+      );
     }
     
     return list;
@@ -89,7 +122,8 @@ export class Produtos {
     return Array.from({ length: total }, (_, i) => i + 1);
   });
 
-  // Ações de Modal
+  // ===== AÇÕES DE MODAL - PRODUTOS =====
+  
   openCreateModal() {
     this.resetForm();
     this.modalType.set('create');
@@ -100,7 +134,7 @@ export class Produtos {
     this.formData.set({
       nome: produto.nome,
       precos: { ...produto.precos },
-      quantidadeEstoque: produto.quantidadeEstoque
+      vinculos: produto.vinculos.map(v => ({ ...v }))
     });
     this.modalType.set('edit');
   }
@@ -110,13 +144,37 @@ export class Produtos {
     this.modalType.set('delete');
   }
 
+  // ===== AÇÕES DE MODAL - VARIÁVEIS =====
+
+  openCreateVariavelModal() {
+    this.resetVariavelForm();
+    this.modalType.set('create-variavel');
+  }
+
+  openEditVariavelModal(variavel: VariavelEstoque) {
+    this.selectedVariavel.set(variavel);
+    this.variavelFormData.set({
+      nome: variavel.nome,
+      quantidade: variavel.quantidade
+    });
+    this.modalType.set('edit-variavel');
+  }
+
+  openDeleteVariavelModal(variavel: VariavelEstoque) {
+    this.selectedVariavel.set(variavel);
+    this.modalType.set('delete-variavel');
+  }
+
   closeModal() {
     this.modalType.set(null);
     this.selectedProduto.set(null);
+    this.selectedVariavel.set(null);
     this.resetForm();
+    this.resetVariavelForm();
   }
 
-  // Validação
+  // ===== VALIDAÇÃO - PRODUTOS =====
+
   validateForm(): boolean {
     const errors = {
       nome: '',
@@ -124,7 +182,7 @@ export class Produtos {
       debito: '',
       dinheiro: '',
       pix: '',
-      quantidadeEstoque: ''
+      vinculos: ''
     };
 
     const data = this.formData();
@@ -151,15 +209,40 @@ export class Produtos {
       errors.pix = 'Preço no PIX é obrigatório';
     }
 
-    if (data.quantidadeEstoque < 0) {
-      errors.quantidadeEstoque = 'Quantidade não pode ser negativa';
+    if (data.vinculos.length === 0) {
+      errors.vinculos = 'Produto deve ter pelo menos 1 vínculo de estoque';
     }
 
     this.formErrors.set(errors);
-    return !errors.nome && !errors.credito && !errors.debito && !errors.dinheiro && !errors.pix && !errors.quantidadeEstoque;
+    return !errors.nome && !errors.credito && !errors.debito && !errors.dinheiro && !errors.pix && !errors.vinculos;
   }
 
-  // Atualizar campos do formulário
+  // ===== VALIDAÇÃO - VARIÁVEIS =====
+
+  validateVariavelForm(): boolean {
+    const errors = {
+      nome: '',
+      quantidade: ''
+    };
+
+    const data = this.variavelFormData();
+
+    if (!data.nome.trim()) {
+      errors.nome = 'Nome da variável é obrigatório';
+    } else if (data.nome.trim().length < 2) {
+      errors.nome = 'Nome deve ter pelo menos 2 caracteres';
+    }
+
+    if (data.quantidade < 0) {
+      errors.quantidade = 'Quantidade não pode ser negativa';
+    }
+
+    this.variavelFormErrors.set(errors);
+    return !errors.nome && !errors.quantidade;
+  }
+
+  // ===== ATUALIZAÇÃO DE CAMPOS - PRODUTOS =====
+
   updateNome(event: Event) {
     const input = event.target as HTMLInputElement;
     this.formData.update(data => ({ ...data, nome: input.value }));
@@ -201,13 +284,82 @@ export class Produtos {
     }));
   }
 
-  updateQuantidade(event: Event) {
+  // ===== ATUALIZAÇÃO DE CAMPOS - VARIÁVEIS =====
+
+  updateVariavelNome(event: Event) {
     const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value) || 0;
-    this.formData.update(data => ({ ...data, quantidadeEstoque: value }));
+    this.variavelFormData.update(data => ({ ...data, nome: input.value }));
   }
 
-  // Ações CRUD
+  updateVariavelQuantidade(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value) || 0;
+    this.variavelFormData.update(data => ({ ...data, quantidade: value }));
+  }
+
+  // ===== GERENCIAMENTO DE VÍNCULOS =====
+
+  addVinculo() {
+    const variaveis = this.variaveis();
+    if (variaveis.length === 0) return;
+
+    // Encontra uma variável que ainda não está vinculada
+    const vinculosAtuais = this.formData().vinculos;
+    const variavelDisponivel = variaveis.find(v => 
+      !vinculosAtuais.some(vinculo => vinculo.variavelEstoqueId === v.id)
+    );
+
+    if (variavelDisponivel) {
+      this.formData.update(data => ({
+        ...data,
+        vinculos: [...data.vinculos, { 
+          variavelEstoqueId: variavelDisponivel.id, 
+          tipoInteracao: 'reduz' 
+        }]
+      }));
+    }
+  }
+
+  removeVinculo(index: number) {
+    this.formData.update(data => ({
+      ...data,
+      vinculos: data.vinculos.filter((_, i) => i !== index)
+    }));
+  }
+
+  updateVinculoVariavel(index: number, event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.formData.update(data => {
+      const vinculos = [...data.vinculos];
+      vinculos[index] = { ...vinculos[index], variavelEstoqueId: select.value };
+      return { ...data, vinculos };
+    });
+  }
+
+  updateVinculoTipo(index: number, event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.formData.update(data => {
+      const vinculos = [...data.vinculos];
+      vinculos[index] = { ...vinculos[index], tipoInteracao: select.value as TipoInteracaoEstoque };
+      return { ...data, vinculos };
+    });
+  }
+
+  getVariavelNome(variavelId: string): string {
+    const variavel = this.variaveis().find(v => v.id === variavelId);
+    return variavel?.nome || 'Desconhecido';
+  }
+
+  getVinculosDisponiveis(currentVinculoId?: string): VariavelEstoque[] {
+    const vinculosAtuais = this.formData().vinculos;
+    return this.variaveis().filter(v => 
+      v.id === currentVinculoId || 
+      !vinculosAtuais.some(vinculo => vinculo.variavelEstoqueId === v.id)
+    );
+  }
+
+  // ===== AÇÕES CRUD - PRODUTOS =====
+
   handleSubmit() {
     if (!this.validateForm()) {
       return;
@@ -233,7 +385,54 @@ export class Produtos {
     }
   }
 
-  // Paginação
+  // ===== AÇÕES CRUD - VARIÁVEIS =====
+
+  handleVariavelSubmit() {
+    if (!this.validateVariavelForm()) {
+      return;
+    }
+
+    const data = this.variavelFormData();
+    const isEdit = this.modalType() === 'edit-variavel';
+    
+    let success: boolean;
+    if (isEdit) {
+      success = this.variavelEstoqueService.updateVariavel(this.selectedVariavel()!.id, data);
+    } else {
+      success = this.variavelEstoqueService.createVariavel(data);
+    }
+
+    if (!success) {
+      this.variavelFormErrors.update(errors => ({
+        ...errors,
+        nome: 'Já existe uma variável com este nome'
+      }));
+      return;
+    }
+
+    this.closeModal();
+  }
+
+  confirmDeleteVariavel() {
+    const variavel = this.selectedVariavel();
+    if (variavel) {
+      // Verifica se há produtos vinculados
+      const produtosVinculados = this.produtos().filter(p => 
+        p.vinculos.some(v => v.variavelEstoqueId === variavel.id)
+      );
+
+      if (produtosVinculados.length > 0) {
+        alert(`Não é possível excluir. Existem ${produtosVinculados.length} produto(s) vinculado(s) a esta variável.`);
+        return;
+      }
+
+      this.variavelEstoqueService.deleteVariavel(variavel.id);
+      this.closeModal();
+    }
+  }
+
+  // ===== PAGINAÇÃO =====
+
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
@@ -252,7 +451,8 @@ export class Produtos {
     }
   }
 
-  // Busca
+  // ===== BUSCA E FILTROS =====
+
   updateSearch(event: Event) {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
@@ -264,21 +464,64 @@ export class Produtos {
     this.currentPage.set(1);
   }
 
-  // Ordenação
   changeSortOrder(order: SortOrder) {
     this.sortOrder.set(order);
     this.currentPage.set(1);
   }
 
-  // Helpers
-  getEstoqueStatus(quantidade: number): 'critico' | 'baixo' | 'normal' {
-    if (quantidade <= 5) return 'critico';
-    if (quantidade <= 15) return 'baixo';
-    return 'normal';
+  // ===== FILTRO DE PERÍODO =====
+
+  updateDataInicio(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.dataInicio.set(input.value ? new Date(input.value) : null);
+    this.currentPage.set(1);
+  }
+
+  updateDataFim(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.dataFim.set(input.value ? new Date(input.value) : null);
+    this.currentPage.set(1);
+  }
+
+  clearDateFilter() {
+    this.dataInicio.set(null);
+    this.dataFim.set(null);
+    this.currentPage.set(1);
+  }
+
+  getDateInputValue(date: Date | null): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // ===== HELPERS =====
+
+  getTotalVendas(produtoId: string): number {
+    return this.vendasPorPeriodo().get(produtoId) || 0;
+  }
+
+  getVendasStatus(totalVendas: number): 'alto' | 'medio' | 'baixo' {
+    if (totalVendas >= 30) return 'alto';
+    if (totalVendas >= 10) return 'medio';
+    return 'baixo';
   }
 
   getMelhorPreco(precos: PrecoPorPagamento): number {
     return Math.min(precos.credito, precos.debito, precos.dinheiro, precos.pix);
+  }
+
+  toggleVariaveis() {
+    this.variaveisExpanded.update(v => !v);
+  }
+
+  getEstoqueStatus(quantidade: number): 'critico' | 'baixo' | 'normal' {
+    if (quantidade <= 5) return 'critico';
+    if (quantidade <= 15) return 'baixo';
+    return 'normal';
   }
 
   private resetForm() {
@@ -290,7 +533,7 @@ export class Produtos {
         dinheiro: 0,
         pix: 0
       },
-      quantidadeEstoque: 0
+      vinculos: []
     });
     this.formErrors.set({
       nome: '',
@@ -298,7 +541,18 @@ export class Produtos {
       debito: '',
       dinheiro: '',
       pix: '',
-      quantidadeEstoque: ''
+      vinculos: ''
+    });
+  }
+
+  private resetVariavelForm() {
+    this.variavelFormData.set({
+      nome: '',
+      quantidade: 0
+    });
+    this.variavelFormErrors.set({
+      nome: '',
+      quantidade: ''
     });
   }
 }
