@@ -27,6 +27,10 @@ export const routes: Routes = [
             loadComponent: () => import('./pages/painel-principal/painel-principal').then((m) => m.PainelPrincipal),
         },
         {
+            path: 'vendas',
+            loadComponent: () => import('./pages/vendas/vendas').then((m) => m.Vendas),
+        },
+        {
             path: 'recebimentos-pendentes',
             loadComponent: () => import('./pages/recebimentos-pendentes/recebimentos-pendentes').then((m) => m.RecebimentosPendentes),
         },
@@ -37,6 +41,10 @@ export const routes: Routes = [
         {
             path: 'clientes',
             loadComponent: () => import('./pages/clientes/clientes').then((m) => m.Clientes),
+        },
+        {
+            path: 'enderecos',
+            loadComponent: () => import('./pages/enderecos/enderecos').then((m) => m.Enderecos),
         },
         {
             path: 'produtos',

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 
@@ -15,11 +15,19 @@ export class Topbar {
   @Output() toggleSidebar = new EventEmitter<void>();
   isMenuOpen = false;
 
+  // Contador de notificações (simulação - futuramente virá de um serviço)
+  notificationCount = signal(3);
+
   // Expondo o sinal do tema para o template
   isDarkMode = this.themeService.isDarkMode;
 
   toggleTheme() {
     this.themeService.toggleTheme();
+  }
+
+  openNotifications() {
+    // TODO: Implementar modal de notificações
+    console.log('Abrir modal de notificações');
   }
 
   logout() {

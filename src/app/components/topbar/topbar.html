@@ -1,5 +1,5 @@
 <header class="topbar">
-    <!-- Lado Esquerdo: Toggle de Tema -->
+    <!-- Lado Esquerdo: Toggle de Tema e Menu -->
     <div class="topbar-left">
         <button class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="isDarkMode() ? 'Ativar tema claro' : 'Ativar tema escuro'">
             @if (isDarkMode()) {
@@ -30,13 +30,20 @@
         </button>
     </div>
 
-    <!-- Centro: Logo -->
-    <div class="topbar-center">
-        <img src="../../../assets/logo.png" alt="Léo Gás" class="logo">
-    </div>
-
-    <!-- Lado Direito: Menu do Usuário -->
+    <!-- Lado Direito: Notificações e Menu do Usuário -->
     <div class="topbar-right">
+        <!-- Botão de Notificações -->
+        <button class="notification-btn" (click)="openNotifications()" title="Notificações">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            @if (notificationCount() > 0) {
+                <span class="notification-badge">{{ notificationCount() }}</span>
+            }
+        </button>
+
+        <!-- Menu do Usuário -->
         <div class="user-menu">
             <button class="user-avatar" (click)="isMenuOpen = !isMenuOpen">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

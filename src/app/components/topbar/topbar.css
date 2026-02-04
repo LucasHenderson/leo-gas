@@ -21,7 +21,6 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    flex: 1;
 }
 
 .theme-toggle {
@@ -70,33 +69,71 @@
     transform: scale(0.95);
 }
 
-/* TOPBAR CENTER */
-
-.topbar-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.logo {
-    height: 50px;
-    width: auto;
-    transition: transform 0.3s ease;
-}
-
-.logo:hover {
-    transform: scale(1.05);
-}
-
 /* TOPBAR RIGHT */
 
 .topbar-right {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    flex: 1;
+    gap: 16px;
 }
+
+/* BOTÃO DE NOTIFICAÇÕES */
+
+.notification-btn {
+    position: relative;
+    background: var(--theme-toggle-bg);
+    border: 2px solid var(--theme-toggle-border);
+    color: var(--text-color);
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.notification-btn:hover {
+    background: var(--theme-toggle-hover);
+    transform: scale(1.05);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.notification-btn:active {
+    transform: scale(0.95);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid var(--topbar-bg);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* USER MENU */
 
 .user-menu {
     position: relative;
@@ -200,11 +237,8 @@
         display: flex;
     }
 
-    .logo {
-        height: 40px;
-    }
-
     .theme-toggle,
+    .notification-btn,
     .user-avatar {
         width: 38px;
         height: 38px;
@@ -213,14 +247,32 @@
     .topbar-left {
         gap: 12px;
     }
+
+    .topbar-right {
+        gap: 12px;
+    }
+
+    .notification-badge {
+        min-width: 16px;
+        height: 16px;
+        font-size: 10px;
+    }
 }
 
 @media (max-width: 480px) {
-    .topbar-center {
-        flex: 2;
+    .topbar {
+        padding: 8px 12px;
     }
 
-    .logo {
-        height: 35px;
+    .theme-toggle,
+    .notification-btn,
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .topbar-left,
+    .topbar-right {
+        gap: 10px;
     }
 }
