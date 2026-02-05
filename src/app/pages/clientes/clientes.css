@@ -545,8 +545,8 @@
 }
 
 .modal-header {
-  padding: 24px 24px 16px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 24px;
+  border-bottom: 2px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -564,21 +564,23 @@
 }
 
 .btn-close {
-  background: none;
-  border: none;
+  background: var(--body-bg);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-close:hover {
-  background: var(--dropdown-hover);
-  color: var(--text-color);
+  background: #DC2626;
+  border-color: #DC2626;
+  color: white;
 }
 
 /* FORMULÁRIO */
@@ -1023,45 +1025,52 @@
 /* HISTÓRICO */
 
 .historico-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 .historico-item {
-  padding: 14px 16px;
-  background: var(--body-bg);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  background: var(--dropdown-hover);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
 }
 
 .historico-produto {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.historico-nome {
   font-weight: 600;
   color: var(--text-color);
+  margin-bottom: 6px;
   font-size: 14px;
 }
 
-.historico-qtd {
-  font-size: 13px;
-  color: var(--text-secondary);
-  background: var(--dropdown-hover);
-  padding: 2px 8px;
-  border-radius: 4px;
+.historico-nome {
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 15px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
 }
 
-.historico-detalhes {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
+.historico-qtd {
+  background: var(--primary-gradient);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
+
+  .historico-detalhes {
+    flex-direction: column;
+    gap: 6px;
+  }
 
 .historico-valor {
   font-weight: 700;
@@ -1103,31 +1112,43 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 24px;
+  border-bottom: 2px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  background: var(--topbar-bg);
+  z-index: 10;
 }
 
 .btn-back {
-  background: var(--dropdown-hover);
-  border: none;
-  color: var(--text-color);
-  width: 36px;
-  height: 36px;
+  background: var(--body-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .btn-back:hover {
   background: var(--primary-color);
+  border-color: var(--primary-color);
   color: white;
 }
 
 .modal-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-title-group .modal-title {
+  margin: 0 0 4px 0;
+  font-size: 22px;
 }
 
 .modal-subtitle {
@@ -1137,48 +1158,49 @@
 }
 
 .historico-modal-body {
-  padding: 20px 24px;
+  padding: 20px 24px 24px;
 }
 
 /* Filtros */
 .historico-filtros {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
   margin-bottom: 20px;
-  padding: 16px;
-  background: var(--body-bg);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  flex-wrap: wrap;
 }
 
 .filtro-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 140px;
 }
 
 .filtro-group label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .filtro-input {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
   color: var(--text-color);
-  background: var(--topbar-bg);
+  background: var(--body-bg);
+  transition: all 0.3s ease;
   font-family: inherit;
-  transition: all 0.2s ease;
 }
 
 .filtro-input:focus {
   outline: none;
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(27, 123, 79, 0.1);
 }
 
 .btn-limpar-filtro {
@@ -1205,52 +1227,53 @@
 /* Resumo */
 .historico-resumo {
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
+  gap: 16px;
   margin-bottom: 20px;
-  padding: 16px 20px;
-  background: rgba(27, 123, 79, 0.08);
+  padding: 16px;
+  background: var(--dropdown-hover);
   border-radius: 12px;
-  border: 1px solid rgba(27, 123, 79, 0.2);
+  border: 2px solid var(--border-color);
 }
 
 .resumo-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
 }
 
 .resumo-label {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .resumo-value {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-color);
 }
 
 .resumo-value.valor {
-  color: var(--primary-color);
-  font-size: 18px;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Lista de pedidos completa */
 .historico-list-full {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 350px;
+  max-height: 450px;
   overflow-y: auto;
   padding-right: 8px;
 }
 
 .historico-item-full {
-  background: var(--body-bg);
-  border: 1px solid var(--border-color);
+  background: var(--dropdown-hover);
+  border: 2px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
+  margin-bottom: 12px;
   transition: all 0.2s ease;
 }
 
@@ -1263,24 +1286,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: var(--dropdown-hover);
+  padding: 14px 16px;
+  background: var(--body-bg);
   border-bottom: 1px solid var(--border-color);
-}
-
-.historico-produto-full {
-  display: flex;
-  align-items: center;
   gap: 12px;
-}
-
-.historico-data-full {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary-color);
-  background: rgba(27, 123, 79, 0.1);
-  padding: 4px 10px;
-  border-radius: 6px;
 }
 
 .historico-item-body {
@@ -1288,6 +1297,22 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.historico-produto-full {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.historico-data-full {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .historico-info-row {
@@ -1310,6 +1335,7 @@
   color: var(--text-color);
   font-size: 15px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .historico-pagamento-tag {
@@ -1319,6 +1345,7 @@
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .historico-endereco-full {
@@ -1373,7 +1400,6 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
-
 /* Empty state do histórico */
 .historico-empty {
   display: flex;
@@ -1455,7 +1481,6 @@
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
@@ -1517,6 +1542,12 @@
 
 /* RESPONSIVO */
 
+/* Tablets e telas médias (768px - 1024px) */
+@media (max-width: 1024px) {
+  /* Altura dinâmica - sem restrições */
+}
+
+/* Tablets menores (600px - 768px) */
 @media (max-width: 768px) {
   .clientes-page {
     padding: 20px 16px;
@@ -1586,6 +1617,12 @@
   }
 }
 
+/* Smartphones grandes (481px - 600px) */
+@media (max-width: 600px) {
+  /* Altura dinâmica - sem restrições */
+}
+
+/* Smartphones pequenos (max 480px) */
 @media (max-width: 480px) {
   .page-title {
     font-size: 24px;
@@ -1646,18 +1683,43 @@
     justify-content: space-between;
   }
 
+  /* Ajustes para itens do histórico em smartphones - altura dinâmica */
   .historico-item-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .historico-produto-full {
+    width: 100%;
+  }
+
+  .historico-nome {
+    -webkit-line-clamp: unset; /* Remove limite de linhas */
+    white-space: normal; /* Permite quebra de linha natural */
   }
 
   .historico-data-full {
     align-self: flex-end;
   }
 
+  .historico-item-body {
+    padding: 12px 14px;
+  }
+
   .historico-info-row {
-    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .historico-valor-full,
+  .historico-pagamento-tag {
+    font-size: 13px;
+  }
+
+  .historico-endereco-full {
+    font-size: 12px;
+    width: 100%;
   }
 
   .modal-header-with-back {
@@ -1685,29 +1747,50 @@
   }
 }
 
-/* Scrollbar */
+/* Smartphones muito pequenos (max 360px) */
+@media (max-width: 360px) {
+  /* Altura 100% dinâmica - acompanha o conteúdo */
+  .historico-nome {
+    font-size: 14px;
+  }
+
+  .historico-valor-full {
+    font-size: 14px;
+  }
+
+  .historico-pagamento-tag {
+    font-size: 11px;
+  }
+}
+
+/* ===== SCROLLBAR ===== */
+
 .modal-content::-webkit-scrollbar,
 .enderecos-list::-webkit-scrollbar,
-.texto-gerado::-webkit-scrollbar {
+.texto-gerado::-webkit-scrollbar,
+.historico-list-full::-webkit-scrollbar {
   width: 8px;
 }
 
 .modal-content::-webkit-scrollbar-track,
 .enderecos-list::-webkit-scrollbar-track,
-.texto-gerado::-webkit-scrollbar-track {
+.texto-gerado::-webkit-scrollbar-track,
+.historico-list-full::-webkit-scrollbar-track {
   background: var(--body-bg);
   border-radius: 10px;
 }
 
 .modal-content::-webkit-scrollbar-thumb,
 .enderecos-list::-webkit-scrollbar-thumb,
-.texto-gerado::-webkit-scrollbar-thumb {
+.texto-gerado::-webkit-scrollbar-thumb,
+.historico-list-full::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 10px;
 }
 
 .modal-content::-webkit-scrollbar-thumb:hover,
 .enderecos-list::-webkit-scrollbar-thumb:hover,
-.texto-gerado::-webkit-scrollbar-thumb:hover {
+.texto-gerado::-webkit-scrollbar-thumb:hover,
+.historico-list-full::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
