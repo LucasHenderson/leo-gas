@@ -624,6 +624,79 @@
 
 /* LISTA DE ENDEREÇOS (CHECKBOXES) */
 
+.vinculo-search-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.vinculo-search-box {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vinculo-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.vinculo-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 36px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-color);
+  background: var(--body-bg);
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.vinculo-search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(27, 123, 79, 0.1);
+}
+
+.vinculo-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.vinculo-clear-search {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.vinculo-clear-search:hover {
+  background: var(--dropdown-hover);
+  color: var(--text-color);
+}
+
+.vinculo-selected-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-color);
+  background: rgba(27, 123, 79, 0.1);
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
 .enderecos-list {
   max-height: 200px;
   overflow-y: auto;
@@ -644,6 +717,16 @@
 
 .endereco-checkbox:hover {
   background: var(--dropdown-hover);
+}
+
+.endereco-checkbox.is-selected {
+  background: rgba(27, 123, 79, 0.08);
+  border-left: 3px solid var(--primary-color);
+  padding-left: 9px;
+}
+
+.endereco-checkbox.is-selected:hover {
+  background: rgba(27, 123, 79, 0.12);
 }
 
 .endereco-checkbox input[type="checkbox"] {
@@ -689,6 +772,28 @@
   text-align: center;
   padding: 20px;
   margin: 0;
+}
+
+.list-more-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.list-more-info svg {
+  color: #3B82F6;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.list-more-info span {
+  font-size: 12px;
+  color: #3B82F6;
+  line-height: 1.4;
 }
 
 /* MODAL BODY */

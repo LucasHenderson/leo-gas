@@ -46,10 +46,44 @@ export class Clientes {
   // Para modal de cadastro - texto gerado
   textoGerado = signal('');
 
+  // Busca de endereços no modal (otimizada)
+  enderecoSearchTerm = signal('');
+  private enderecoSearchDebounceTimer: any = null;
+  readonly MAX_DISPLAY_ITEMS = 50; // Limite de itens exibidos para performance
+
   // Computed
   clientes = this.clienteService.getClientes();
   enderecos = this.enderecoService.getEnderecos();
   totalClientes = computed(() => this.clienteService.getTotalClientes());
+
+  // Endereços filtrados para o modal (com limite para performance)
+  filteredEnderecosModal = computed(() => {
+    const search = this.enderecoSearchTerm().toLowerCase().trim();
+    const selectedIds = this.formData().enderecosIds;
+    let list = this.enderecos();
+    
+    // Sempre mostrar os selecionados primeiro
+    const selected = list.filter(e => selectedIds.includes(e.id));
+    const notSelected = list.filter(e => !selectedIds.includes(e.id));
+    
+    // Aplicar busca apenas nos não selecionados
+    let filteredNotSelected = notSelected;
+    if (search) {
+      filteredNotSelected = notSelected.filter(e => {
+        const enderecoStr = this.getEnderecoFormatado(e).toLowerCase();
+        return enderecoStr.includes(search);
+      });
+    }
+    
+    // Limitar quantidade para performance
+    const limitedNotSelected = filteredNotSelected.slice(0, this.MAX_DISPLAY_ITEMS - selected.length);
+    
+    return {
+      items: [...selected, ...limitedNotSelected],
+      totalFiltered: filteredNotSelected.length,
+      hasMore: filteredNotSelected.length > limitedNotSelected.length
+    };
+  });
 
   filteredClientes = computed(() => {
     let list = this.clientes();
@@ -189,6 +223,26 @@ export class Clientes {
         : [...data.enderecosIds, enderecoId];
       return { ...data, enderecosIds };
     });
+  }
+
+  // Busca de endereços com debounce para performance
+  updateEnderecoSearch(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    
+    // Limpa timer anterior
+    if (this.enderecoSearchDebounceTimer) {
+      clearTimeout(this.enderecoSearchDebounceTimer);
+    }
+    
+    // Debounce de 300ms
+    this.enderecoSearchDebounceTimer = setTimeout(() => {
+      this.enderecoSearchTerm.set(value);
+    }, 300);
+  }
+
+  clearEnderecoSearch() {
+    this.enderecoSearchTerm.set('');
   }
 
   // ===== AÇÕES CRUD =====
@@ -361,5 +415,6 @@ export class Clientes {
       dataCadastro: new Date(),
       observacoes: ''
     });
+    this.enderecoSearchTerm.set('');
   }
 }

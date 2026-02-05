@@ -46,6 +46,11 @@ export class Enderecos {
   searchTerm = signal('');
   sortOrder = signal<SortOrder>('nenhum');
 
+  // Busca de clientes no modal (otimizada)
+  clienteSearchTerm = signal('');
+  private clienteSearchDebounceTimer: any = null;
+  readonly MAX_DISPLAY_ITEMS = 50; // Limite de itens exibidos para performance
+
   // Computed
   enderecos = this.enderecoService.getEnderecos();
   clientes = this.clienteService.getClientes();
@@ -53,6 +58,36 @@ export class Enderecos {
   quadrasResumo = computed(() => this.enderecoService.getQuadrasResumo());
   
   totalEnderecos = computed(() => this.enderecos().length);
+
+  // Clientes filtrados para o modal (com limite para performance)
+  filteredClientesModal = computed(() => {
+    const search = this.clienteSearchTerm().toLowerCase().trim();
+    const selectedIds = this.formData().clientesIds;
+    let list = this.clientes();
+    
+    // Sempre mostrar os selecionados primeiro
+    const selected = list.filter(c => selectedIds.includes(c.id));
+    const notSelected = list.filter(c => !selectedIds.includes(c.id));
+    
+    // Aplicar busca apenas nos não selecionados
+    let filteredNotSelected = notSelected;
+    if (search) {
+      filteredNotSelected = notSelected.filter(c => {
+        const nomeMatch = c.nome.toLowerCase().includes(search);
+        const telefoneMatch = c.telefone.includes(search);
+        return nomeMatch || telefoneMatch;
+      });
+    }
+    
+    // Limitar quantidade para performance
+    const limitedNotSelected = filteredNotSelected.slice(0, this.MAX_DISPLAY_ITEMS - selected.length);
+    
+    return {
+      items: [...selected, ...limitedNotSelected],
+      totalFiltered: filteredNotSelected.length,
+      hasMore: filteredNotSelected.length > limitedNotSelected.length
+    };
+  });
 
   filteredEnderecos = computed(() => {
     let list = this.enderecos();
@@ -196,6 +231,26 @@ export class Enderecos {
     });
   }
 
+  // Busca de clientes com debounce para performance
+  updateClienteSearch(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    
+    // Limpa timer anterior
+    if (this.clienteSearchDebounceTimer) {
+      clearTimeout(this.clienteSearchDebounceTimer);
+    }
+    
+    // Debounce de 300ms
+    this.clienteSearchDebounceTimer = setTimeout(() => {
+      this.clienteSearchTerm.set(value);
+    }, 300);
+  }
+
+  clearClienteSearch() {
+    this.clienteSearchTerm.set('');
+  }
+
   // ===== AÇÕES CRUD =====
 
   handleSubmit() {
@@ -336,5 +391,6 @@ export class Enderecos {
       complemento: '',
       clientesIds: []
     });
+    this.clienteSearchTerm.set('');
   }
 }

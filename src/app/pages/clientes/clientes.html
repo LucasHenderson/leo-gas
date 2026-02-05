@@ -310,9 +310,35 @@
 
               <div class="form-group">
                 <label>Endereços</label>
+                <div class="vinculo-search-container">
+                  <div class="vinculo-search-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="vinculo-search-icon">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input 
+                      type="text" 
+                      class="vinculo-search-input" 
+                      placeholder="Buscar endereço..."
+                      [value]="enderecoSearchTerm()"
+                      (input)="updateEnderecoSearch($event)"
+                    >
+                    @if (enderecoSearchTerm()) {
+                      <button type="button" class="vinculo-clear-search" (click)="clearEnderecoSearch()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/>
+                          <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    }
+                  </div>
+                  @if (formData().enderecosIds.length > 0) {
+                    <span class="vinculo-selected-count">{{ formData().enderecosIds.length }} selecionado(s)</span>
+                  }
+                </div>
                 <div class="enderecos-list">
-                  @for (endereco of enderecos(); track endereco.id) {
-                    <label class="endereco-checkbox">
+                  @for (endereco of filteredEnderecosModal().items; track endereco.id) {
+                    <label class="endereco-checkbox" [class.is-selected]="formData().enderecosIds.includes(endereco.id)">
                       <input 
                         type="checkbox" 
                         [checked]="formData().enderecosIds.includes(endereco.id)"
@@ -322,7 +348,23 @@
                       <span class="endereco-text">{{ getEnderecoFormatado(endereco) }}</span>
                     </label>
                   } @empty {
-                    <p class="no-enderecos">Nenhum endereço cadastrado</p>
+                    <p class="no-enderecos">
+                      @if (enderecoSearchTerm()) {
+                        Nenhum endereço encontrado para "{{ enderecoSearchTerm() }}"
+                      } @else {
+                        Nenhum endereço cadastrado
+                      }
+                    </p>
+                  }
+                  @if (filteredEnderecosModal().hasMore) {
+                    <div class="list-more-info">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                      <span>Mostrando {{ filteredEnderecosModal().items.length }} de {{ filteredEnderecosModal().totalFiltered }} endereços. Use a busca para encontrar mais.</span>
+                    </div>
                   }
                 </div>
               </div>

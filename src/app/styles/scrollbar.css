@@ -1,0 +1,320 @@
+/* ===== VARIÁVEIS DE SCROLLBAR - TEMA CLARO ===== */
+:root {
+  --scrollbar-width: 10px;
+  --scrollbar-width-thin: 6px;
+  --scrollbar-border-radius: 10px;
+  
+  /* Cores do tema claro */
+  --scrollbar-track-bg: #f1f1f1;
+  --scrollbar-thumb-bg: #c1c1c1;
+  --scrollbar-thumb-hover: #a1a1a1;
+  --scrollbar-thumb-active: #818181;
+}
+
+/* ===== VARIÁVEIS DE SCROLLBAR - TEMA ESCURO ===== */
+:root[data-theme="dark"] {
+  --scrollbar-track-bg: #1a1a2e;
+  --scrollbar-thumb-bg: #3d3d5c;
+  --scrollbar-thumb-hover: #5a5a7a;
+  --scrollbar-thumb-active: #7a7a9a;
+}
+
+/* ============================================
+   SCROLLBAR PRINCIPAL - WEBKIT
+   (Chrome, Safari, Edge, Opera)
+   ============================================ */
+
+/* Largura e altura da scrollbar */
+::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+
+/* Track (trilho) da scrollbar */
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: var(--scrollbar-border-radius);
+}
+
+/* Thumb (parte arrastável) da scrollbar */
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: var(--scrollbar-border-radius);
+  border: 2px solid var(--scrollbar-track-bg);
+  transition: background 0.3s ease;
+}
+
+/* Thumb no hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Thumb quando clicado/arrastando */
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-active);
+}
+
+/* Canto onde scrollbars horizontal e vertical se encontram */
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track-bg);
+}
+
+/* ============================================
+   SCROLLBAR - FIREFOX
+   ============================================ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
+}
+
+/* ============================================
+   SCROLLBAR PARA ELEMENTOS ESPECÍFICOS
+   ============================================ */
+
+/* HTML e Body */
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
+}
+
+/* Scroll suave global */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Modais */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: 8px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-track-bg);
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Listas e containers com scroll */
+.enderecos-list::-webkit-scrollbar,
+.clientes-list::-webkit-scrollbar,
+.historico-list::-webkit-scrollbar,
+.dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.enderecos-list::-webkit-scrollbar-track,
+.clientes-list::-webkit-scrollbar-track,
+.historico-list::-webkit-scrollbar-track,
+.dropdown-list::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: 6px;
+}
+
+.enderecos-list::-webkit-scrollbar-thumb,
+.clientes-list::-webkit-scrollbar-thumb,
+.historico-list::-webkit-scrollbar-thumb,
+.dropdown-list::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 6px;
+}
+
+.enderecos-list::-webkit-scrollbar-thumb:hover,
+.clientes-list::-webkit-scrollbar-thumb:hover,
+.historico-list::-webkit-scrollbar-thumb:hover,
+.dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Textarea */
+textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: 6px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 6px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Código e Pre */
+pre::-webkit-scrollbar,
+code::-webkit-scrollbar,
+.texto-gerado::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+pre::-webkit-scrollbar-track,
+code::-webkit-scrollbar-track,
+.texto-gerado::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: 6px;
+}
+
+pre::-webkit-scrollbar-thumb,
+code::-webkit-scrollbar-thumb,
+.texto-gerado::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 6px;
+}
+
+pre::-webkit-scrollbar-thumb:hover,
+code::-webkit-scrollbar-thumb:hover,
+.texto-gerado::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Tabelas com scroll horizontal */
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: 8px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 8px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ============================================
+   CLASSES UTILITÁRIAS
+   ============================================ */
+
+/* Scrollbar fina */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border-width: 1px;
+}
+
+/* Scrollbar muito fina (mini) */
+.scrollbar-mini::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-mini::-webkit-scrollbar-thumb {
+  border-width: 0;
+}
+
+/* Scrollbar invisível (aparece só no hover) */
+.scrollbar-auto::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.scrollbar-auto:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+}
+
+/* Scrollbar com cor primária (verde) */
+.scrollbar-primary::-webkit-scrollbar-thumb {
+  background: rgba(27, 123, 79, 0.4);
+}
+
+.scrollbar-primary::-webkit-scrollbar-thumb:hover {
+  background: rgba(27, 123, 79, 0.6);
+}
+
+.scrollbar-primary::-webkit-scrollbar-thumb:active {
+  background: rgba(27, 123, 79, 0.8);
+}
+
+/* Tema escuro - scrollbar primária */
+:root[data-theme="dark"] .scrollbar-primary::-webkit-scrollbar-thumb {
+  background: rgba(34, 197, 94, 0.3);
+}
+
+:root[data-theme="dark"] .scrollbar-primary::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 197, 94, 0.5);
+}
+
+:root[data-theme="dark"] .scrollbar-primary::-webkit-scrollbar-thumb:active {
+  background: rgba(34, 197, 94, 0.7);
+}
+
+/* Esconder scrollbar mantendo funcionalidade */
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Forçar exibição de scrollbar */
+.scrollbar-always {
+  overflow-y: scroll !important;
+}
+
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+
+@media (max-width: 768px) {
+  :root {
+    --scrollbar-width: 8px;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border-width: 1px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --scrollbar-width: 6px;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border-width: 1px;
+  }
+}
+
+/* ============================================
+   ANIMAÇÕES (OPCIONAL)
+   ============================================ */
+
+/* Transição suave ao mudar de tema */
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb {
+  transition: background 0.3s ease;
+}
