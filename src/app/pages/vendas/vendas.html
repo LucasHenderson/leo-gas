@@ -1,1 +1,945 @@
-<p>vendas works!</p>
+<div class="vendas-page">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="page-title">Vendas</h1>
+        <p class="page-subtitle">Gerencie todas as vendas e entregas</p>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-primary" (click)="openCreateModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nova Venda
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTROS E BUSCA -->
+    <div class="filters-section">
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input 
+          type="text"
+          class="search-input"
+          placeholder="Buscar por nome, endereço ou telefone..."
+          [value]="searchTerm()"
+          (input)="updateSearchTerm($event)"
+        />
+        @if (searchTerm()) {
+          <button class="clear-search" (click)="clearSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        }
+      </div>
+
+      <div class="filters-group">
+        <div class="filter-item">
+          <label>Entregador:</label>
+          <select class="filter-select" [value]="filterEntregador()" (change)="updateFilterEntregador($event)">
+            <option value="">Todos</option>
+            @for (entregador of entregadoresAtivos(); track entregador.id) {
+              <option [value]="entregador.id">{{ entregador.identificador }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>Status:</label>
+          <select class="filter-select" [value]="filterStatus()" (change)="updateFilterStatus($event)">
+            <option value="">Todos</option>
+            <option value="a-entregar">A Entregar</option>
+            <option value="entregando">Entregando</option>
+            <option value="entregue">Entregue</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>Data Início:</label>
+          <input 
+            type="date" 
+            class="filter-input"
+            [value]="filterDataInicio()"
+            (change)="updateFilterDataInicio($event)"
+          />
+        </div>
+
+        <div class="filter-item">
+          <label>Data Fim:</label>
+          <input 
+            type="date" 
+            class="filter-input"
+            [value]="filterDataFim()"
+            (change)="updateFilterDataFim($event)"
+          />
+        </div>
+
+        <button class="btn-clear-filters" (click)="limparFiltros()">
+          Limpar Filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTA DE VENDAS -->
+  <div class="vendas-list">
+    @if (paginatedVendas().length === 0) {
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"/>
+          <circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+        <p>Nenhuma venda encontrada</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="vendas-table">
+          <thead>
+            <tr>
+              <th>Produtos</th>
+              <th>Cliente / Endereço</th>
+              <th>Entregador</th>
+              <th>Valor Total</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (venda of paginatedVendas(); track venda.id) {
+              <tr (click)="openViewModal(venda)" class="table-row-clickable">
+                <td>
+                  <div class="produtos-cell">
+                    @for (item of venda.itens; track $index) {
+                      <div class="produto-item">
+                        <span class="produto-nome">{{ item.produtoNome }}</span>
+                        <span class="produto-qtd">x{{ item.quantidade }}</span>
+                      </div>
+                    }
+                    <div class="pagamentos-badges">
+                      @for (pagamento of venda.pagamentos; track $index) {
+                        <span class="pagamento-badge-small">
+                          {{ getFormaPagamentoLabel(pagamento.forma) }}: {{ formatarMoeda(pagamento.valor) }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cliente-cell">
+                    <span class="cliente-nome">{{ venda.clienteNome }}</span>
+                    <span class="cliente-endereco">{{ venda.enderecoFormatado }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="entregador-badge">{{ venda.entregadorIdentificador }}</span>
+                </td>
+                <td>
+                  <span class="valor-total">{{ formatarMoeda(venda.valorTotal) }}</span>
+                </td>
+                <td>
+                  <span class="status-badge" [class]="getStatusClass(venda.status)">
+                    {{ getStatusLabel(venda.status) }}
+                  </span>
+                  @if (venda.recebimentoPendente) {
+                    <span class="pendente-badge">Recebimento Pendente</span>
+                  }
+                </td>
+                <td>
+                  <div class="action-buttons" (click)="$event.stopPropagation()">
+                    @if (venda.status === 'a-entregar') {
+                      <button 
+                        class="btn-action btn-progress"
+                        (click)="updateStatus(venda.id, 'entregando')"
+                        title="Marcar como Entregando"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M5 12h14"/>
+                          <path d="m12 5 7 7-7 7"/>
+                        </svg>
+                      </button>
+                    }
+                    @if (venda.status === 'entregando') {
+                      <button 
+                        class="btn-action btn-success"
+                        (click)="updateStatus(venda.id, 'entregue')"
+                        title="Marcar como Entregue"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </button>
+                    }
+                    <button 
+                      class="btn-action btn-edit"
+                      (click)="openEditModal(venda)"
+                      title="Editar"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button 
+                      class="btn-action btn-delete"
+                      (click)="openDeleteModal(venda)"
+                      title="Excluir"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                      </svg>
+                    </button>
+                    <button 
+                      class="btn-action btn-pending"
+                      [class.active]="venda.recebimentoPendente"
+                      (click)="marcarRecebimentoPendente(venda.id)"
+                      [title]="venda.recebimentoPendente ? 'Remover Recebimento Pendente' : 'Marcar Recebimento Pendente'"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINAÇÃO -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button 
+            class="pagination-btn"
+            [disabled]="currentPage() === 1"
+            (click)="previousPage()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+
+          @for (page of pages(); track page) {
+            <button 
+              class="pagination-btn"
+              [class.active]="currentPage() === page"
+              (click)="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+          }
+
+          <button 
+            class="pagination-btn"
+            [disabled]="currentPage() === totalPages()"
+            (click)="nextPage()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- TOTALIZADORES -->
+  <div class="totalizadores">
+    <div class="total-geral">
+      <h3>Total do Período</h3>
+      <p class="valor-grande">{{ formatarMoeda(totalVendas()) }}</p>
+    </div>
+
+    <div class="total-por-entregador">
+      <h3>Total por Entregador (sem PIX)</h3>
+      <div class="entregador-list">
+        @for (item of totalPorEntregador(); track item.nome) {
+          <div class="entregador-total-item">
+            <span class="entregador-nome">{{ item.nome }}:</span>
+            <span class="entregador-valor">{{ formatarMoeda(item.total) }}</span>
+          </div>
+        }
+        @if (totalPorEntregador().length === 0) {
+          <p class="empty-message">Nenhuma venda encontrada no período</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL - CRIAR VENDA -->
+  @if (modalType() === 'create') {
+    <div class="modal-overlay" (click)="closeModalBackdrop($event)">
+      <div class="modal-content modal-large">
+        <div class="modal-header">
+          <h2>Nova Venda</h2>
+          <button class="btn-close" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-steps">
+          <div class="step" [class.active]="createStep() === 1" [class.completed]="createStep() > 1">
+            <span class="step-number">1</span>
+            <span class="step-label">Produtos</span>
+          </div>
+          <div class="step-line" [class.completed]="createStep() > 1"></div>
+          <div class="step" [class.active]="createStep() === 2" [class.completed]="createStep() > 2">
+            <span class="step-number">2</span>
+            <span class="step-label">Cliente</span>
+          </div>
+          <div class="step-line" [class.completed]="createStep() > 2"></div>
+          <div class="step" [class.active]="createStep() === 3">
+            <span class="step-number">3</span>
+            <span class="step-label">Entregador</span>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <!-- STEP 1: PRODUTOS E PAGAMENTOS -->
+          @if (createStep() === 1) {
+            <div class="step-content">
+              <div class="produtos-seletor">
+                <h3>Adicionar Produtos</h3>
+                <div class="form-row">
+                  <div class="form-group flex-2">
+                    <label>Produto</label>
+                    <select class="form-input" [value]="produtoSelecionadoId()" (change)="updateProdutoSelecionado($event)">
+                      <option value="">Selecione um produto</option>
+                      @for (produto of produtos(); track produto.id) {
+                        <option [value]="produto.id">
+                          {{ produto.nome }} - Preços variáveis
+                        </option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Quantidade</label>
+                    <input 
+                      type="number" 
+                      class="form-input"
+                      min="1"
+                      [value]="quantidadeProduto()"
+                      (input)="updateQuantidadeProduto($event)"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>Forma Pag.</label>
+                    <select class="form-input" [value]="tempFormaPagamento()" (change)="updateFormaPagamento($event)">
+                      <option value="dinheiro">Dinheiro</option>
+                      <option value="pix">PIX</option>
+                      <option value="debito">Débito</option>
+                      <option value="credito">Crédito</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button 
+                      class="btn-secondary"
+                      [disabled]="!produtoSelecionadoId()"
+                      (click)="adicionarProduto()"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="itens-list">
+                <h3>Itens da Venda</h3>
+                @if (tempItens().length === 0) {
+                  <p class="empty-message">Nenhum produto adicionado</p>
+                } @else {
+                  <table class="itens-table">
+                    <thead>
+                      <tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Preço Unit.</th>
+                        <th>Subtotal</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of tempItens(); track $index) {
+                        <tr>
+                          <td>{{ item.produtoNome }}</td>
+                          <td>{{ item.quantidade }}</td>
+                          <td>{{ formatarMoeda(item.precoUnitario) }}</td>
+                          <td>{{ formatarMoeda(item.subtotal) }}</td>
+                          <td>
+                            <button class="btn-remove" (click)="removerItem($index)">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                  
+                  <!-- Valor Total dos Itens -->
+                  <div class="total-itens-display">
+                    <span class="total-itens-label">Valor Total:</span>
+                    <span class="total-itens-valor">{{ formatarMoeda(totalItensTemp()) }}</span>
+                  </div>
+                }
+              </div>
+
+              <!-- SEÇÃO DE PAGAMENTOS MÚLTIPLOS (OPCIONAL) -->
+              <div class="pagamentos-section">
+                <h3>Formas de Pagamento (Opcional)</h3>
+                <p style="margin: 0 0 16px 0; color: var(--text-secondary); font-size: 14px;">
+                  Por padrão, o valor total será considerado na forma de pagamento selecionada abaixo. 
+                  Você pode especificar pagamentos parciais (ex: R$ 20 em PIX, restante em Dinheiro).
+                </p>
+                <div class="pagamento-input-group">
+                  <div class="form-group">
+                    <label>Forma de Pagamento Padrão</label>
+                    <select class="form-input" [value]="tempFormaPagamento()" (change)="updateFormaPagamento($event)">
+                      <option value="dinheiro">Dinheiro</option>
+                      <option value="pix">PIX</option>
+                      <option value="debito">Débito</option>
+                      <option value="credito">Crédito</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Valor</label>
+                    <input 
+                      type="number" 
+                      class="form-input"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      [value]="tempValorPagamento()"
+                      (input)="updateValorPagamento($event)"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button 
+                      class="btn-secondary"
+                      [disabled]="tempValorPagamento() <= 0"
+                      (click)="adicionarPagamento()"
+                    >
+                      Adicionar Pagamento
+                    </button>
+                  </div>
+                </div>
+
+                @if (tempPagamentos().length === 0) {
+                  <div class="pagamentos-vazia">
+                    <p>O valor total será considerado na forma de pagamento padrão selecionada.</p>
+                    @if (totalItensTemp() > 0) {
+                      <p><strong>Valor Total dos Itens: {{ formatarMoeda(totalItensTemp()) }}</strong></p>
+                    }
+                  </div>
+                } @else {
+                  <div class="pagamentos-list">
+                    @for (pagamento of tempPagamentos(); track $index) {
+                      <div class="pagamento-item">
+                        <div class="pagamento-info">
+                          <span class="pagamento-forma">{{ getFormaPagamentoLabel(pagamento.forma) }}</span>
+                          <span class="pagamento-valor">{{ formatarMoeda(pagamento.valor) }}</span>
+                        </div>
+                        <button class="btn-remove" (click)="removerPagamento($index)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                        </button>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="total-pagamentos">
+                    <span class="total-pagamentos-label">Total Especificado:</span>
+                    <span class="total-pagamentos-valor">{{ formatarMoeda(totalPagamentosTemp()) }}</span>
+                  </div>
+                  
+                  @if (totalItensTemp() - totalPagamentosTemp() > 0.01) {
+                    <div class="info-box" style="margin-top: 12px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                      <p>Restante de {{ formatarMoeda(totalItensTemp() - totalPagamentosTemp()) }} será considerado em {{ getFormaPagamentoLabel(tempFormaPagamento()) }}</p>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+
+          <!-- STEP 2: CLIENTE E ENDEREÇO -->
+          @if (createStep() === 2) {
+            <div class="step-content">
+              <!-- Busca de Cliente -->
+              <div class="cliente-search-box">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input 
+                  type="text"
+                  class="cliente-search-input"
+                  placeholder="Buscar cliente por nome ou telefone..."
+                  [value]="clienteSearchTerm()"
+                  (input)="updateClienteSearchTerm($event)"
+                />
+                @if (clienteSearchTerm()) {
+                  <button class="clear-search" (click)="clearClienteSearch()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+
+              <div class="form-group">
+                <label>Cliente *</label>
+                <select class="form-input" [value]="tempClienteId()" (change)="updateTempCliente($event)">
+                  <option value="">Selecione um cliente</option>
+                  @for (cliente of clientesFiltrados(); track cliente.id) {
+                    <option [value]="cliente.id">{{ cliente.nome }} - {{ cliente.telefone }}</option>
+                  }
+                </select>
+              </div>
+
+              @if (tempClienteId()) {
+                <div class="form-group">
+                  <label>Endereço de Entrega *</label>
+                  <select class="form-input" [value]="tempEnderecoId()" (change)="updateTempEndereco($event)">
+                    <option value="">Selecione um endereço</option>
+                    @for (endereco of enderecosDoCliente(); track endereco.id) {
+                      <option [value]="endereco.id">{{ getEnderecoFormatado(endereco) }}</option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="form-group">
+                <label>Observações</label>
+                <textarea 
+                  class="form-textarea"
+                  rows="3"
+                  placeholder="Observações sobre a venda..."
+                  [value]="tempObservacoes()"
+                  (input)="updateTempObservacoes($event)"
+                ></textarea>
+              </div>
+            </div>
+          }
+
+          <!-- STEP 3: ENTREGADOR -->
+          @if (createStep() === 3) {
+            <div class="step-content">
+              <h3>Selecione o Entregador</h3>
+              <div class="entregador-grid">
+                @for (entregador of entregadoresAtivos(); track entregador.id) {
+                  <div class="entregador-card" (click)="confirmarCadastro(entregador.id)">
+                    <div class="entregador-info">
+                      <span class="entregador-identificador">{{ entregador.identificador }}</span>
+                      <span class="entregador-nome">{{ entregador.nomeCompleto }}</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </div>
+                }
+              </div>
+
+              <div class="resumo-venda">
+                <h4>Resumo da Venda</h4>
+                @if (tempClienteId()) {
+                  @for (cliente of clientes(); track cliente.id) {
+                    @if (cliente.id === tempClienteId()) {
+                      <p><strong>Cliente:</strong> {{ cliente.nome }}</p>
+                    }
+                  }
+                }
+                @if (tempEnderecoId()) {
+                  @for (endereco of enderecosDoCliente(); track endereco.id) {
+                    @if (endereco.id === tempEnderecoId()) {
+                      <p><strong>Endereço:</strong> {{ getEnderecoFormatado(endereco) }}</p>
+                    }
+                  }
+                }
+                <p><strong>Itens:</strong> {{ tempItens().length }} produto(s)</p>
+                <p><strong>Valor Total:</strong> {{ formatarMoeda(totalItensTemp()) }}</p>
+                
+                @if (tempPagamentos().length > 0) {
+                  <p><strong>Pagamentos Especificados:</strong></p>
+                  <ul style="margin: 8px 0 8px 20px;">
+                    @for (pagamento of tempPagamentos(); track $index) {
+                      <li>{{ getFormaPagamentoLabel(pagamento.forma) }}: {{ formatarMoeda(pagamento.valor) }}</li>
+                    }
+                    @if (totalItensTemp() - totalPagamentosTemp() > 0.01) {
+                      <li>{{ getFormaPagamentoLabel(tempFormaPagamento()) }}: {{ formatarMoeda(totalItensTemp() - totalPagamentosTemp()) }} (restante)</li>
+                    }
+                  </ul>
+                } @else {
+                  <p><strong>Forma de Pagamento:</strong> {{ getFormaPagamentoLabel(tempFormaPagamento()) }} (valor total)</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          @if (createStep() > 1) {
+            <button class="btn-secondary" (click)="voltarStep()">Voltar</button>
+          }
+          <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          @if (createStep() < 3) {
+            <button 
+              class="btn-primary"
+              [disabled]="(createStep() === 1 && tempItens().length === 0) || (createStep() === 2 && (!tempClienteId() || !tempEnderecoId()))"
+              (click)="proximoStep()"
+            >
+              Próximo
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL - VISUALIZAR DETALHES -->
+  @if (modalType() === 'view' && selectedVenda()) {
+    <div class="modal-overlay" (click)="closeModalBackdrop($event)">
+      <div class="modal-content modal-medium">
+        <div class="modal-header">
+          <h2>Detalhes da Venda</h2>
+          <button class="btn-close" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="detail-section">
+            <h3>Informações do Cliente</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Nome:</span>
+                <span class="detail-value">{{ selectedVenda()!.clienteNome }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Telefone:</span>
+                <a 
+                  [href]="getWhatsAppLink(selectedVenda()!.clienteTelefone)" 
+                  target="_blank"
+                  class="whatsapp-link"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                  </svg>
+                  {{ selectedVenda()!.clienteTelefone }}
+                </a>
+              </div>
+              <div class="detail-item full-width">
+                <span class="detail-label">Endereço:</span>
+                <span class="detail-value">{{ selectedVenda()!.enderecoFormatado }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Informações da Entrega</h3>
+            
+            <!-- Status Editável -->
+            <div class="status-edit-group">
+              <label>Status:</label>
+              <select 
+                class="form-input" 
+                [value]="selectedVenda()!.status" 
+                (change)="updateStatusView($event)"
+              >
+                <option value="a-entregar">A Entregar</option>
+                <option value="entregando">Entregando</option>
+                <option value="entregue">Entregue</option>
+              </select>
+            </div>
+
+            <div class="detail-grid" style="margin-top: 16px;">
+              <div class="detail-item">
+                <span class="detail-label">Entregador:</span>
+                <span class="detail-value">{{ selectedVenda()!.entregadorIdentificador }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Data:</span>
+                <span class="detail-value">{{ formatarData(selectedVenda()!.dataVenda) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Recebimento:</span>
+                <span class="detail-value" [class.text-warning]="selectedVenda()!.recebimentoPendente">
+                  {{ selectedVenda()!.recebimentoPendente ? 'Pendente' : 'OK' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Produtos</h3>
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Quantidade</th>
+                  <th>Preço Unit.</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of selectedVenda()!.itens; track $index) {
+                  <tr>
+                    <td>{{ item.produtoNome }}</td>
+                    <td>{{ item.quantidade }}</td>
+                    <td>{{ formatarMoeda(item.precoUnitario) }}</td>
+                    <td>{{ formatarMoeda(item.subtotal) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="detail-section">
+            <h3>Pagamentos</h3>
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Forma de Pagamento</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (pagamento of selectedVenda()!.pagamentos; track $index) {
+                  <tr>
+                    <td>{{ getFormaPagamentoLabel(pagamento.forma) }}</td>
+                    <td>{{ formatarMoeda(pagamento.valor) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <div class="detail-grid" style="margin-top: 16px;">
+              <div class="detail-item">
+                <span class="detail-label">Valor Total:</span>
+                <span class="detail-value valor-destaque">{{ formatarMoeda(selectedVenda()!.valorTotal) }}</span>
+              </div>
+            </div>
+          </div>
+
+          @if (selectedVenda()!.observacoes) {
+            <div class="detail-section">
+              <h3>Observações</h3>
+              <p class="observacoes-text">{{ selectedVenda()!.observacoes }}</p>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModal()">Fechar</button>
+          <button class="btn-primary" (click)="openEditModal(selectedVenda()!)">Editar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL - EDITAR VENDA -->
+  @if (modalType() === 'edit' && selectedVenda()) {
+    <div class="modal-overlay" (click)="closeModalBackdrop($event)">
+      <div class="modal-content modal-medium">
+        <div class="modal-header">
+          <h2>Editar Venda</h2>
+          <button class="btn-close" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Busca de Cliente -->
+          <div class="cliente-search-box">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input 
+              type="text"
+              class="cliente-search-input"
+              placeholder="Buscar cliente por nome ou telefone..."
+              [value]="clienteSearchTerm()"
+              (input)="updateClienteSearchTerm($event)"
+            />
+            @if (clienteSearchTerm()) {
+              <button class="clear-search" (click)="clearClienteSearch()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            }
+          </div>
+
+          <div class="form-group">
+            <label>Cliente *</label>
+            <select class="form-input" [value]="formData().clienteId" (change)="updateFormCliente($event)">
+              <option value="">Selecione um cliente</option>
+              @for (cliente of clientesFiltrados(); track cliente.id) {
+                <option [value]="cliente.id">{{ cliente.nome }} - {{ cliente.telefone }}</option>
+              }
+            </select>
+          </div>
+
+          @if (formData().clienteId) {
+            <div class="form-group">
+              <label>Endereço de Entrega *</label>
+              <select class="form-input" [value]="formData().enderecoId" (change)="updateFormEndereco($event)">
+                <option value="">Selecione um endereço</option>
+                @for (endereco of enderecosDoCliente(); track endereco.id) {
+                  <option [value]="endereco.id">{{ getEnderecoFormatado(endereco) }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="form-group">
+            <label>Entregador *</label>
+            <select class="form-input" [value]="formData().entregadorId" (change)="updateFormEntregador($event)">
+              <option value="">Selecione um entregador</option>
+              @for (entregador of entregadoresAtivos(); track entregador.id) {
+                <option [value]="entregador.id">{{ entregador.identificador }} - {{ entregador.nomeCompleto }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Pagamentos Atuais (apenas visualização) -->
+          <div class="form-group">
+            <label>Formas de Pagamento</label>
+            <div class="pagamentos-list">
+              @for (pagamento of formData().pagamentos; track $index) {
+                <div class="pagamento-item">
+                  <div class="pagamento-info">
+                    <span class="pagamento-forma">{{ getFormaPagamentoLabel(pagamento.forma) }}</span>
+                    <span class="pagamento-valor">{{ formatarMoeda(pagamento.valor) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Valor Total *</label>
+            <input 
+              type="number" 
+              class="form-input"
+              step="0.01"
+              min="0"
+              [value]="formData().valorTotal"
+              (input)="updateFormValorTotal($event)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea 
+              class="form-textarea"
+              rows="3"
+              placeholder="Observações sobre a venda..."
+              [value]="formData().observacoes"
+              (input)="updateFormObservacoes($event)"
+            ></textarea>
+          </div>
+
+          <div class="info-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <p>Nota: A edição de itens e pagamentos individuais não está disponível. Para alterar produtos ou formas de pagamento, crie uma nova venda.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button 
+            class="btn-primary"
+            [disabled]="!formData().clienteId || !formData().enderecoId || !formData().entregadorId"
+            (click)="confirmarEdicao()"
+          >
+            Salvar Alterações
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL - EXCLUIR VENDA -->
+  @if (modalType() === 'delete' && selectedVenda()) {
+    <div class="modal-overlay" (click)="closeModalBackdrop($event)">
+      <div class="modal-content modal-small">
+        <div class="modal-header">
+          <h2>Excluir Venda</h2>
+          <button class="btn-close" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="warning-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <p>Tem certeza que deseja excluir esta venda?</p>
+            <div class="venda-info">
+              <p><strong>Cliente:</strong> {{ selectedVenda()!.clienteNome }}</p>
+              <p><strong>Valor:</strong> {{ formatarMoeda(selectedVenda()!.valorTotal) }}</p>
+              <p><strong>Data:</strong> {{ formatarData(selectedVenda()!.dataVenda) }}</p>
+            </div>
+            <p class="warning-text">Esta ação não pode ser desfeita.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button class="btn-danger" (click)="confirmarExclusao()">Excluir Venda</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
