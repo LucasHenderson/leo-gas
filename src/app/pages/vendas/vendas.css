@@ -521,51 +521,31 @@
   background: rgba(0, 0, 0, 0.75) !important;
   backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 9999 !important;
   padding: 20px;
+  padding-top: 40px;
   animation: fadeIn 0.2s ease;
   overflow-y: auto;
 }
 
 .modal-content {
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-height: 90vh;
+  max-height: calc(100vh - 80px);
+  min-height: 500px;
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease;
   position: relative;
   z-index: 10000;
-  color: #333333;
+  color: var(--text-color);
+  /* Garante que o modal tenha espaço suficiente para dropdowns */
+  margin-bottom: 100px;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .modal-content {
-    background: #1e1e1e;
-    color: #e0e0e0;
-  }
-  
-  .modal-header {
-    border-bottom-color: #333333;
-  }
-  
-  .modal-footer {
-    border-top-color: #333333;
-  }
-  
-  .form-input,
-  .form-textarea,
-  .search-input,
-  .cliente-search-input {
-    background: #2a2a2a;
-    color: #e0e0e0;
-    border-color: #444444;
-  }
-}
 
 .modal-small {
   width: 100%;
@@ -619,6 +599,16 @@
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  /* Adiciona espaço extra no final para garantir que dropdowns abram para baixo */
+  padding-bottom: 350px;
+}
+
+/* Pseudo-elemento para criar espaço virtual no final do modal */
+.modal-body::after {
+  content: '';
+  display: block;
+  height: 1px;
+  width: 100%;
 }
 
 .modal-footer {
@@ -1134,57 +1124,6 @@
   }
 }
 
-/* ===== RESPONSIVIDADE ===== */
-
-@media (max-width: 1200px) {
-  .totalizadores {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .vendas-page {
-    padding: 16px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filters-group {
-    flex-direction: column;
-  }
-
-  .filter-item {
-    min-width: 100%;
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .vendas-table {
-    min-width: 800px;
-  }
-
-  .action-buttons {
-    flex-wrap: wrap;
-  }
-
-  .modal-content {
-    max-width: 100%;
-  }
-
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .entregador-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ===== BUSCA DE CLIENTE NO MODAL ===== */
 
 .total-itens-display {
@@ -1224,6 +1163,7 @@
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
+  z-index: 2;
 }
 
 .cliente-search-input {
@@ -1249,6 +1189,7 @@
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  z-index: 2;
 }
 
 /* ===== MÚLTIPLOS PAGAMENTOS ===== */
@@ -1424,3 +1365,421 @@
   font-size: 11px;
   font-weight: 600;
 }
+
+/* ===== RESPONSIVIDADE ===== */
+
+@media (max-width: 1200px) {
+  .totalizadores {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .vendas-page {
+    padding: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-group {
+    flex-direction: column;
+  }
+
+  .filter-item {
+    min-width: 100%;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .vendas-table {
+    min-width: 800px;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+  }
+
+  .modal-content {
+    max-width: 100%;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .entregador-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== CORREÇÕES PARA TELAS MENORES QUE 720PX ===== */
+
+@media (max-width: 720px) {
+  /* Ajustes gerais da página */
+  .vendas-page {
+    padding: 12px;
+  }
+
+  /* Header */
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  /* Modal - Ajustes críticos */
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-start;
+    padding-top: 20px;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 40px);
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .modal-large,
+  .modal-medium,
+  .modal-small {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* Header do modal */
+  .modal-header {
+    padding: 16px;
+    flex-wrap: wrap;
+  }
+
+  .modal-header h2 {
+    font-size: 20px;
+  }
+
+  /* Body do modal */
+  .modal-body {
+    padding: 16px;
+    max-height: calc(100vh - 200px);
+    /* Mais espaço no final para dropdown abrir para baixo em mobile */
+    padding-bottom: 300px;
+  }
+
+  /* Footer do modal */
+  .modal-footer {
+    padding: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .modal-footer button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* Steps do modal */
+  .modal-steps {
+    padding: 16px 12px;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .step-label {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .step-line {
+    width: 40px;
+    margin: 0 8px;
+  }
+
+  /* Conteúdo das etapas */
+  .step-content {
+    min-height: 300px;
+  }
+
+  /* Formulários */
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .cliente-search-input {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .cliente-search-input {
+    padding-left: 38px;
+    padding-right: 38px;
+  }
+
+  /* Produtos seletor */
+  .produtos-seletor {
+    padding: 16px;
+  }
+
+  .produtos-seletor h3 {
+    font-size: 16px;
+  }
+
+  /* Tabela de itens */
+  .itens-table {
+    font-size: 13px;
+  }
+
+  .itens-table th,
+  .itens-table td {
+    padding: 8px;
+  }
+
+  /* Grid de entregadores */
+  .entregador-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .entregador-card {
+    padding: 16px;
+  }
+
+  .entregador-identificador {
+    font-size: 16px;
+  }
+
+  /* Resumo da venda */
+  .resumo-venda {
+    padding: 16px;
+  }
+
+  .resumo-venda h4 {
+    font-size: 15px;
+  }
+
+  .resumo-venda p {
+    font-size: 13px;
+  }
+
+  /* Pagamentos */
+  .pagamentos-section {
+    padding: 16px;
+  }
+
+  .pagamento-input-group {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pagamento-item {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pagamento-info {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .total-pagamentos {
+    padding: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .total-pagamentos-label {
+    font-size: 14px;
+  }
+
+  .total-pagamentos-valor {
+    font-size: 20px;
+  }
+
+  /* Totalizadores */
+  .total-itens-display {
+    padding: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .total-itens-label {
+    font-size: 14px;
+  }
+
+  .total-itens-valor {
+    font-size: 20px;
+  }
+
+  /* Detalhes */
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .detail-section h3 {
+    font-size: 16px;
+  }
+
+  .detail-value.valor-destaque {
+    font-size: 20px;
+  }
+
+  /* Botões */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    padding: 10px 20px;
+    font-size: 14px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Info e warning boxes */
+  .info-box,
+  .warning-box {
+    padding: 12px;
+  }
+
+  .info-box p,
+  .warning-box p {
+    font-size: 13px;
+  }
+
+  /* Filtros */
+  .filters-section {
+    padding: 16px;
+  }
+
+  .search-input {
+    font-size: 14px;
+    padding: 10px 38px;
+  }
+
+  /* Paginação */
+  .pagination {
+    padding: 16px 10px;
+    gap: 6px;
+  }
+
+  .pagination-btn {
+    min-width: 36px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+/* ===== CORREÇÃO ESPECÍFICA PARA DROPDOWN DOS SELECTS ===== */
+
+/* Força o dropdown a sempre abrir para baixo */
+.form-input,
+.form-select,
+select.form-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 36px;
+  /* Limita o texto e adiciona ellipsis */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Garante que o dropdown nativo sempre abra para baixo */
+select.form-input {
+  /* Remove qualquer possibilidade de abertura para cima */
+  transform: translateY(0) !important;
+  direction: ltr;
+  position: relative;
+}
+
+/* Estilos específicos para o select de cliente no modal - SEMPRE PARA BAIXO */
+.step-content .form-group select.form-input,
+.cliente-search-box ~ .form-group select.form-input,
+.modal-body select.form-input {
+  /* Força posicionamento que favorece abertura para baixo */
+  position: relative !important;
+  transform: none !important;
+  bottom: auto !important;
+  top: auto !important;
+}
+
+/* Estilização das opções do select */
+select.form-input option {
+  padding: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Garante scroll adequado se houver muitas opções */
+select.form-input {
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Correção específica para o select de produtos */
+.produtos-seletor select.form-input,
+.form-row select.form-input {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Opções do select de produtos também com ellipsis */
+.produtos-seletor select.form-input option,
+.form-row select.form-input option {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+}
+
+/* Ajuste específico para telas pequenas */
+@media (max-width: 720px) {
+  select.form-input {
+    font-size: 16px; /* Previne zoom automático no iOS */
+  }
+  
+  /* Em telas pequenas, garante ainda mais que não vai estourar */
+  select.form-input,
+  select.form-input option {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ===== FIM DAS CORREÇÕES ===== */
