@@ -772,101 +772,370 @@
     </div>
   }
 
-  <!-- MODAL - EDITAR VENDA -->
-  @if (modalType() === 'edit' && selectedVenda()) {
-    <div class="modal-overlay" (click)="closeModalBackdrop($event)">
-      <div class="modal-content modal-medium">
-        <div class="modal-header">
+<!-- MODAL - EDITAR VENDA (VERSÃO MELHORADA) -->
+@if (modalType() === 'edit' && selectedVenda()) {
+  <div class="modal-overlay" (click)="closeModalBackdrop($event)">
+    <div class="modal-content modal-edit-large">
+      <div class="modal-header">
+        <div class="modal-header-content">
           <h2>Editar Venda</h2>
-          <button class="btn-close" (click)="closeModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+          <span class="venda-id-badge">#{{ selectedVenda()!.id.substring(0, 8) }}</span>
         </div>
+        <button class="btn-close" (click)="closeModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
 
-        <div class="modal-body">
-          <!-- Busca de Cliente -->
-          <div class="cliente-search-box">
-            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input 
-              type="text"
-              class="cliente-search-input"
-              placeholder="Buscar cliente por nome ou telefone..."
-              [value]="clienteSearchTerm()"
-              (input)="updateClienteSearchTerm($event)"
-            />
-            @if (clienteSearchTerm()) {
-              <button class="clear-search" (click)="clearClienteSearch()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            }
+      <div class="modal-body modal-edit-body">
+        
+        <!-- SEÇÃO 1: PRODUTOS -->
+        <div class="edit-section">
+          <div class="section-header">
+            <div class="section-icon">🛒</div>
+            <h3>Produtos da Venda</h3>
           </div>
-
-          <div class="form-group">
-            <label>Cliente *</label>
-            <select class="form-input" [value]="formData().clienteId" (change)="updateFormCliente($event)">
-              <option value="">Selecione um cliente</option>
-              @for (cliente of clientesFiltrados(); track cliente.id) {
-                <option [value]="cliente.id">{{ cliente.nome }} - {{ cliente.telefone }}</option>
-              }
-            </select>
-          </div>
-
-          @if (formData().clienteId) {
-            <div class="form-group">
-              <label>Endereço de Entrega *</label>
-              <select class="form-input" [value]="formData().enderecoId" (change)="updateFormEndereco($event)">
-                <option value="">Selecione um endereço</option>
-                @for (endereco of enderecosDoCliente(); track endereco.id) {
-                  <option [value]="endereco.id">{{ getEnderecoFormatado(endereco) }}</option>
-                }
-              </select>
+          
+          @if (formData().itens.length === 0) {
+            <div class="empty-state-card">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/>
+                <circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+              <p>Nenhum produto na venda</p>
             </div>
-          }
-
-          <div class="form-group">
-            <label>Entregador *</label>
-            <select class="form-input" [value]="formData().entregadorId" (change)="updateFormEntregador($event)">
-              <option value="">Selecione um entregador</option>
-              @for (entregador of entregadoresAtivos(); track entregador.id) {
-                <option [value]="entregador.id">{{ entregador.identificador }} - {{ entregador.nomeCompleto }}</option>
-              }
-            </select>
-          </div>
-
-          <!-- Pagamentos Atuais (apenas visualização) -->
-          <div class="form-group">
-            <label>Formas de Pagamento</label>
-            <div class="pagamentos-list">
-              @for (pagamento of formData().pagamentos; track $index) {
-                <div class="pagamento-item">
-                  <div class="pagamento-info">
-                    <span class="pagamento-forma">{{ getFormaPagamentoLabel(pagamento.forma) }}</span>
-                    <span class="pagamento-valor">{{ formatarMoeda(pagamento.valor) }}</span>
+          } @else {
+            <div class="produtos-edit-list">
+              @for (item of formData().itens; track $index) {
+                <div class="produto-edit-card">
+                  <div class="produto-edit-header">
+                    <span class="produto-nome">{{ item.produtoNome }}</span>
+                    <button 
+                      class="btn-remove-produto" 
+                      (click)="removerFormItem($index)"
+                      type="button"
+                      title="Remover produto"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="produto-edit-inputs">
+                    <div class="input-group">
+                      <label>Quantidade</label>
+                      <input 
+                        type="number" 
+                        class="input-edit"
+                        min="1"
+                        step="1"
+                        [value]="item.quantidade"
+                        (input)="updateFormItemQuantidade($index, $event)"
+                      />
+                    </div>
+                    <div class="input-group">
+                      <label>Preço Unitário</label>
+                      <div class="input-with-prefix">
+                        <span class="input-prefix">R$</span>
+                        <input 
+                          type="number" 
+                          class="input-edit input-with-prefix-field"
+                          min="0"
+                          step="0.01"
+                          [value]="item.precoUnitario"
+                          (input)="updateFormItemPreco($index, $event)"
+                        />
+                      </div>
+                    </div>
+                    <div class="input-group">
+                      <label>Subtotal</label>
+                      <div class="subtotal-display">
+                        {{ formatarMoeda(item.subtotal) }}
+                      </div>
+                    </div>
                   </div>
                 </div>
               }
             </div>
+            
+            <!-- Total dos Itens -->
+            <div class="total-section">
+              <span class="total-label">Total dos Itens</span>
+              <span class="total-value total-value-large">{{ formatarMoeda(totalItensForm()) }}</span>
+            </div>
+          }
+
+          <!-- Adicionar Novo Produto -->
+          <div class="adicionar-produto-section">
+            <button 
+              class="btn-toggle-add"
+              type="button"
+              (click)="toggleAdicionarProduto()"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Adicionar Produto
+            </button>
+            
+            @if (mostrarAdicionarProduto()) {
+              <div class="adicionar-produto-form">
+                <div class="form-row-inline">
+                  <div class="form-group flex-2">
+                    <label>Produto</label>
+                    <select 
+                      class="form-input"
+                      [value]="produtoSelecionadoId()"
+                      (change)="updateProdutoSelecionado($event)"
+                    >
+                      <option value="">Selecione...</option>
+                      @for (produto of produtos(); track produto.id) {
+                        <option [value]="produto.id">{{ produto.nome }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label>Quantidade</label>
+                    <input 
+                      type="number"
+                      class="form-input"
+                      min="1"
+                      [value]="quantidadeProduto()"
+                      (input)="updateQuantidadeProduto($event)"
+                    />
+                  </div>
+                  <div class="form-group flex-auto">
+                    <label>&nbsp;</label>
+                    <button 
+                      class="btn-add-produto"
+                      type="button"
+                      [disabled]="!produtoSelecionadoId()"
+                      (click)="adicionarFormProduto()"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Adicionar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- SEÇÃO 2: FORMAS DE PAGAMENTO -->
+        <div class="edit-section">
+          <div class="section-header">
+            <div class="section-icon">💳</div>
+            <h3>Formas de Pagamento</h3>
+          </div>
+          
+          @if (formData().pagamentos.length === 0) {
+            <div class="info-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <p>Adicione pelo menos uma forma de pagamento. A soma deve ser igual ao total dos itens.</p>
+            </div>
+          } @else {
+            <div class="pagamentos-edit-list">
+              @for (pagamento of formData().pagamentos; track $index) {
+                <div class="pagamento-edit-card">
+                  <div class="pagamento-edit-inputs">
+                    <div class="input-group flex-1">
+                      <label>Forma</label>
+                      <select 
+                        class="form-input"
+                        [value]="pagamento.forma"
+                        (change)="updateFormPagamentoForma($index, $event)"
+                      >
+                        <option value="dinheiro">💵 Dinheiro</option>
+                        <option value="pix">🔵 PIX</option>
+                        <option value="debito">💳 Débito</option>
+                        <option value="credito">💳 Crédito</option>
+                      </select>
+                    </div>
+                    <div class="input-group flex-1">
+                      <label>Valor</label>
+                      <div class="input-with-prefix">
+                        <span class="input-prefix">R$</span>
+                        <input 
+                          type="number"
+                          class="form-input input-with-prefix-field"
+                          step="0.01"
+                          min="0"
+                          [value]="pagamento.valor"
+                          (input)="updateFormPagamentoValor($index, $event)"
+                        />
+                      </div>
+                    </div>
+                    <div class="input-group flex-auto">
+                      <label>&nbsp;</label>
+                      <button 
+                        class="btn-remove-pagamento"
+                        type="button"
+                        (click)="removerFormPagamento($index)"
+                        title="Remover"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/>
+                          <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Adicionar Pagamento -->
+          <button 
+            class="btn-add-pagamento"
+            type="button"
+            (click)="adicionarFormPagamentoVazio()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Adicionar Forma de Pagamento
+          </button>
+
+          <!-- Validação e Resumo de Pagamentos -->
+          <div class="pagamentos-resumo">
+            <div class="resumo-row">
+              <span>Total dos Pagamentos:</span>
+              <span class="resumo-value">{{ formatarMoeda(totalPagamentosForm()) }}</span>
+            </div>
+            <div class="resumo-row">
+              <span>Total dos Itens:</span>
+              <span class="resumo-value">{{ formatarMoeda(totalItensForm()) }}</span>
+            </div>
+            <div class="resumo-row resumo-diferenca">
+              <span>Diferença:</span>
+              <span [class]="diferencaPagamentosForm() > 0.01 ? 'diferenca-erro' : 'diferenca-ok'">
+                {{ formatarMoeda(diferencaPagamentosForm()) }}
+              </span>
+            </div>
+          </div>
+
+          @if (diferencaPagamentosForm() > 0.01) {
+            <div class="warning-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <div>
+                <strong>Atenção:</strong> A soma dos pagamentos deve ser igual ao total dos itens.
+                <button 
+                  class="btn-ajustar-pagamento"
+                  type="button"
+                  (click)="ajustarPagamentosAutomaticamente()"
+                >
+                  Ajustar Automaticamente
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- SEÇÃO 3: CLIENTE E ENDEREÇO -->
+        <div class="edit-section">
+          <div class="section-header">
+            <div class="section-icon">👤</div>
+            <h3>Cliente e Endereço</h3>
+          </div>
+
+          <!-- Busca de Cliente -->
+          <div class="cliente-search-wrapper">
+            <div class="search-box">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input 
+                type="text"
+                class="search-input"
+                placeholder="Buscar cliente por nome ou telefone..."
+                [value]="clienteSearchTerm()"
+                (input)="updateClienteSearchTerm($event)"
+              />
+              @if (clienteSearchTerm()) {
+                <button class="btn-clear-search" (click)="clearClienteSearch()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="form-row-columns">
+            <div class="form-group">
+              <label>Cliente</label>
+              <select 
+                class="form-input"
+                [value]="formData().clienteId"
+                (change)="updateFormCliente($event)"
+              >
+                <option value="">Selecione um cliente</option>
+                @for (cliente of clientesFiltrados(); track cliente.id) {
+                  <option [value]="cliente.id">
+                    {{ cliente.nome }} - {{ cliente.telefone }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Endereço de Entrega</label>
+              <select 
+                class="form-input"
+                [value]="formData().enderecoId"
+                (change)="updateFormEndereco($event)"
+                [disabled]="!formData().clienteId"
+              >
+                <option value="">Selecione um endereço</option>
+                @for (endereco of enderecosDoClienteForm(); track endereco.id) {
+                  <option [value]="endereco.id">{{ getEnderecoFormatado(endereco) }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 4: ENTREGADOR E OBSERVAÇÕES -->
+        <div class="edit-section">
+          <div class="section-header">
+            <div class="section-icon">🚚</div>
+            <h3>Entregador e Observações</h3>
           </div>
 
           <div class="form-group">
-            <label>Valor Total *</label>
-            <input 
-              type="number" 
+            <label>Entregador</label>
+            <select 
               class="form-input"
-              step="0.01"
-              min="0"
-              [value]="formData().valorTotal"
-              (input)="updateFormValorTotal($event)"
-            />
+              [value]="formData().entregadorId"
+              (change)="updateFormEntregador($event)"
+            >
+              <option value="">Selecione um entregador</option>
+              @for (entregador of entregadoresAtivos(); track entregador.id) {
+                <option [value]="entregador.id">
+                  {{ entregador.identificador }} - {{ entregador.nomeCompleto }}
+                </option>
+              }
+            </select>
           </div>
 
           <div class="form-group">
@@ -874,35 +1143,35 @@
             <textarea 
               class="form-textarea"
               rows="3"
-              placeholder="Observações sobre a venda..."
               [value]="formData().observacoes"
               (input)="updateFormObservacoes($event)"
+              placeholder="Informações adicionais sobre a venda..."
             ></textarea>
           </div>
-
-          <div class="info-box">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-            <p>Nota: A edição de itens e pagamentos individuais não está disponível. Para alterar produtos ou formas de pagamento, crie uma nova venda.</p>
-          </div>
         </div>
 
-        <div class="modal-footer">
-          <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button 
-            class="btn-primary"
-            [disabled]="!formData().clienteId || !formData().enderecoId || !formData().entregadorId"
-            (click)="confirmarEdicao()"
-          >
-            Salvar Alterações
-          </button>
-        </div>
+      </div>
+
+      <!-- FOOTER COM BOTÕES -->
+      <div class="modal-footer modal-edit-footer">
+        <button class="btn-cancel" (click)="closeModal()" type="button">
+          Cancelar
+        </button>
+        <button 
+          class="btn-save" 
+          (click)="confirmarEdicao()"
+          type="button"
+          [disabled]="diferencaPagamentosForm() > 0.01 || formData().pagamentos.length === 0"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Salvar Alterações
+        </button>
       </div>
     </div>
-  }
+  </div>
+}
 
   <!-- MODAL - EXCLUIR VENDA -->
   @if (modalType() === 'delete' && selectedVenda()) {

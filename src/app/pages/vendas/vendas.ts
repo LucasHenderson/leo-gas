@@ -56,6 +56,9 @@ export class Vendas {
   // Busca de clientes nos modais
   clienteSearchTerm = signal<string>('');
 
+  // Controle de UI
+  mostrarAdicionarProduto = signal<boolean>(false);
+
   // Formulário de edição
   formData = signal<VendaFormData>({
     clienteId: '',
@@ -105,14 +108,45 @@ export class Vendas {
     return this.enderecoService.getEnderecosByIds(cliente.enderecosIds);
   });
 
+  // Endereços do cliente para formulário de edição
+  enderecosDoClienteForm = computed(() => {
+    const clienteId = this.formData().clienteId;
+    if (!clienteId) return [];
+    
+    const cliente = this.clienteService.getClienteById(clienteId);
+    if (!cliente) return [];
+    
+    return this.enderecoService.getEnderecosByIds(cliente.enderecosIds);
+  });
+
   // Entregadores ativos
   entregadoresAtivos = computed(() => 
     this.entregadores().filter(e => e.ativo)
   );
 
+  // Total dos itens temporários
+  totalItensTemp = computed(() => {
+    return this.tempItens().reduce((sum, item) => sum + item.subtotal, 0);
+  });
+
   // Total dos pagamentos temporários
   totalPagamentosTemp = computed(() => {
     return this.tempPagamentos().reduce((sum, p) => sum + p.valor, 0);
+  });
+
+  // Total dos itens no formulário de edição
+  totalItensForm = computed(() => {
+    return this.formData().itens.reduce((sum, item) => sum + item.subtotal, 0);
+  });
+
+  // Total dos pagamentos no formulário de edição
+  totalPagamentosForm = computed(() => {
+    return this.formData().pagamentos.reduce((sum, p) => sum + p.valor, 0);
+  });
+
+  // Diferença entre itens e pagamentos (para validação)
+  diferencaPagamentosForm = computed(() => {
+    return Math.abs(this.totalItensForm() - this.totalPagamentosForm());
   });
 
   // Vendas filtradas
@@ -225,43 +259,7 @@ export class Vendas {
     return produto ? produto.precos[formaPagamento] : 0;
   });
 
-  // Total calculado dos itens temporários
-  totalItensTemp = computed(() => {
-    return this.tempItens().reduce((sum, item) => sum + item.subtotal, 0);
-  });
-
-  // ===== NAVEGAÇÃO =====
-
-  goToPage(page: number) {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-    }
-  }
-
-  previousPage() {
-    if (this.currentPage() > 1) {
-      this.currentPage.update(p => p - 1);
-    }
-  }
-
-  nextPage() {
-    if (this.currentPage() < this.totalPages()) {
-      this.currentPage.update(p => p + 1);
-    }
-  }
-
-  // ===== BUSCA E FILTROS =====
-
-  updateSearchTerm(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.searchTerm.set(input.value);
-    this.currentPage.set(1);
-  }
-
-  clearSearch() {
-    this.searchTerm.set('');
-    this.currentPage.set(1);
-  }
+  // ===== BUSCA DE CLIENTES =====
 
   updateClienteSearchTerm(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -270,6 +268,18 @@ export class Vendas {
 
   clearClienteSearch() {
     this.clienteSearchTerm.set('');
+  }
+
+  clearSearch() {
+    this.searchTerm.set('');
+  }
+
+  // ===== FILTROS =====
+
+  updateSearchTerm(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
+    this.currentPage.set(1);
   }
 
   updateFilterEntregador(event: Event) {
@@ -301,10 +311,29 @@ export class Vendas {
     this.filterEntregador.set('');
     this.filterStatus.set('');
     this.filterDataInicio.set(this.getDataAtualFormatada());
-    this.filterDataFim.set(this.getDataAtualFormatada());
+    this.filterDataFim.set('');
     this.currentPage.set(1);
   }
 
+  // ===== PAGINAÇÃO =====
+
+  goToPage(page: number) {
+    this.currentPage.set(page);
+  }
+
+  nextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+    }
+  }
+
+  previousPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+    }
+  }
+
+  // Continua na próxima parte...
   // ===== MODAL - CRIAR VENDA =====
 
   openCreateModal() {
@@ -425,6 +454,41 @@ export class Vendas {
     this.tempValorTotal.set(this.totalItensTemp());
   }
 
+  // Atualizar item individual (CREATE)
+  updateTempItemQuantidade(index: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const quantidade = parseInt(input.value) || 1;
+    
+    this.tempItens.update(itens => 
+      itens.map((item, i) => {
+        if (i === index) {
+          const subtotal = item.precoUnitario * quantidade;
+          return { ...item, quantidade, subtotal };
+        }
+        return item;
+      })
+    );
+    
+    this.tempValorTotal.set(this.totalItensTemp());
+  }
+
+  updateTempItemPreco(index: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const precoUnitario = parseFloat(input.value) || 0;
+    
+    this.tempItens.update(itens => 
+      itens.map((item, i) => {
+        if (i === index) {
+          const subtotal = precoUnitario * item.quantidade;
+          return { ...item, precoUnitario, subtotal };
+        }
+        return item;
+      })
+    );
+    
+    this.tempValorTotal.set(this.totalItensTemp());
+  }
+
   updateValorTotal(event: Event) {
     const input = event.target as HTMLInputElement;
     const value = parseFloat(input.value);
@@ -497,8 +561,12 @@ export class Vendas {
       observacoes: this.tempObservacoes()
     };
 
-    this.vendaService.createVenda(vendaData);
-    this.closeModal();
+    const venda = this.vendaService.createVenda(vendaData);
+    if (venda) {
+      this.closeModal();
+    } else {
+      alert('Erro ao criar venda. Verifique o estoque disponível.');
+    }
   }
 
   updateTempObservacoes(event: Event) {
@@ -565,12 +633,136 @@ export class Vendas {
     this.formData.update(f => ({ ...f, observacoes: textarea.value }));
   }
 
+  // ===== EDIÇÃO DE ITENS INDIVIDUAIS =====
+
+  updateFormItemQuantidade(index: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const quantidade = parseInt(input.value) || 1;
+    
+    this.formData.update(f => {
+      const itens = [...f.itens];
+      const item = itens[index];
+      const subtotal = item.precoUnitario * quantidade;
+      itens[index] = { ...item, quantidade, subtotal };
+      
+      // Recalcula valor total
+      const valorTotal = itens.reduce((sum, i) => sum + i.subtotal, 0);
+      
+      return { ...f, itens, valorTotal };
+    });
+  }
+
+  updateFormItemPreco(index: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const precoUnitario = parseFloat(input.value) || 0;
+    
+    this.formData.update(f => {
+      const itens = [...f.itens];
+      const item = itens[index];
+      const subtotal = precoUnitario * item.quantidade;
+      itens[index] = { ...item, precoUnitario, subtotal };
+      
+      // Recalcula valor total
+      const valorTotal = itens.reduce((sum, i) => sum + i.subtotal, 0);
+      
+      return { ...f, itens, valorTotal };
+    });
+  }
+
+  removerFormItem(index: number) {
+    this.formData.update(f => {
+      const itens = f.itens.filter((_, i) => i !== index);
+      
+      // Recalcula valor total
+      const valorTotal = itens.reduce((sum, i) => sum + i.subtotal, 0);
+      
+      return { ...f, itens, valorTotal };
+    });
+  }
+
+  // Adicionar novo produto no formulário de edição
+  adicionarFormProduto() {
+    const produtoId = this.produtoSelecionadoId();
+    const produto = this.produtoSelecionado();
+    const quantidade = this.quantidadeProduto();
+    const precoUnitario = produto ? produto.precos['dinheiro'] : 0;
+
+    if (!produto || quantidade <= 0) return;
+
+    const novoItem: ItemVenda = {
+      produtoId,
+      produtoNome: produto.nome,
+      quantidade,
+      precoUnitario,
+      subtotal: precoUnitario * quantidade
+    };
+
+    this.formData.update(f => {
+      const itens = [...f.itens, novoItem];
+      const valorTotal = itens.reduce((sum, i) => sum + i.subtotal, 0);
+      return { ...f, itens, valorTotal };
+    });
+    
+    // Reset
+    this.produtoSelecionadoId.set('');
+    this.quantidadeProduto.set(1);
+  }
+
+  // ===== EDIÇÃO DE PAGAMENTOS =====
+
+  updateFormPagamentoForma(index: number, event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const forma = select.value as FormaPagamento;
+    
+    this.formData.update(f => {
+      const pagamentos = [...f.pagamentos];
+      pagamentos[index] = { ...pagamentos[index], forma };
+      return { ...f, pagamentos };
+    });
+  }
+
+  updateFormPagamentoValor(index: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const valor = parseFloat(input.value) || 0;
+    
+    this.formData.update(f => {
+      const pagamentos = [...f.pagamentos];
+      pagamentos[index] = { ...pagamentos[index], valor };
+      return { ...f, pagamentos };
+    });
+  }
+
+  removerFormPagamento(index: number) {
+    this.formData.update(f => ({
+      ...f,
+      pagamentos: f.pagamentos.filter((_, i) => i !== index)
+    }));
+  }
+
+  adicionarFormPagamento() {
+    const forma = this.tempFormaPagamento();
+    const valor = this.tempValorPagamento();
+    
+    if (valor <= 0) return;
+    
+    this.formData.update(f => ({
+      ...f,
+      pagamentos: [...f.pagamentos, { forma, valor }]
+    }));
+    
+    this.tempValorPagamento.set(0);
+  }
+
   confirmarEdicao() {
     const venda = this.selectedVenda();
     if (!venda) return;
 
-    this.vendaService.updateVenda(venda.id, this.formData());
-    this.closeModal();
+    const sucesso = this.vendaService.updateVenda(venda.id, this.formData());
+    if (sucesso) {
+      this.closeModal();
+    } else {
+      alert('Erro ao atualizar venda.');
+    }
   }
 
   // ===== MODAL - EXCLUIR =====
@@ -668,5 +860,64 @@ export class Vendas {
     const mes = String(hoje.getMonth() + 1).padStart(2, '0');
     const dia = String(hoje.getDate()).padStart(2, '0');
     return `${ano}-${mes}-${dia}`;
+  }
+
+  // ===== CONTROLES DE UI =====
+
+  toggleAdicionarProduto() {
+    this.mostrarAdicionarProduto.update(v => !v);
+    if (!this.mostrarAdicionarProduto()) {
+      this.produtoSelecionadoId.set('');
+      this.quantidadeProduto.set(1);
+    }
+  }
+
+  // ===== AJUSTE AUTOMÁTICO DE PAGAMENTOS =====
+
+  ajustarPagamentosAutomaticamente() {
+    const totalItens = this.totalItensForm();
+    
+    // Se não houver pagamentos, cria um com o total
+    if (this.formData().pagamentos.length === 0) {
+      this.formData.update(f => ({
+        ...f,
+        pagamentos: [{ forma: 'dinheiro', valor: totalItens }]
+      }));
+      return;
+    }
+
+    // Se houver pagamentos, ajusta o último para fechar o valor
+    this.formData.update(f => {
+      const pagamentos = [...f.pagamentos];
+      const totalPagamentos = pagamentos.reduce((sum, p) => sum + p.valor, 0);
+      const diferenca = totalItens - totalPagamentos;
+      
+      if (pagamentos.length > 0) {
+        // Ajusta o último pagamento
+        pagamentos[pagamentos.length - 1] = {
+          ...pagamentos[pagamentos.length - 1],
+          valor: pagamentos[pagamentos.length - 1].valor + diferenca
+        };
+      }
+      
+      return { ...f, pagamentos };
+    });
+  }
+
+  adicionarFormPagamentoVazio() {
+    // Calcula quanto falta para completar o total
+    const totalItens = this.totalItensForm();
+    const totalPagamentos = this.totalPagamentosForm();
+    const falta = Math.max(0, totalItens - totalPagamentos);
+    
+    const novoPagamento: PagamentoVenda = {
+      forma: 'dinheiro',
+      valor: falta > 0 ? falta : 0
+    };
+    
+    this.formData.update(f => ({
+      ...f,
+      pagamentos: [...f.pagamentos, novoPagamento]
+    }));
   }
 }

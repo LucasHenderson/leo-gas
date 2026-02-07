@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Venda, VendaFormData, StatusVenda } from '../models/venda.model';
+import { Venda, VendaFormData, StatusVenda, PagamentoVenda } from '../models/venda.model';
 import { ClienteService } from './cliente.service';
 import { EnderecoService } from './endereco.service';
 import { EntregadorService } from './entregador.service';
@@ -257,9 +257,9 @@ export class VendaService {
     };
 
     // Processa cada item da venda
-    for (const item of data.itens) {
+    data.itens.forEach((item, index) => {
       const produto = this.produtoService.getProdutos()().find(p => p.id === item.produtoId);
-      if (!produto) continue;
+      if (!produto) return;
 
       // 1. REDUZ ESTOQUE das variáveis vinculadas ao produto
       for (const vinculo of produto.vinculos) {
@@ -284,19 +284,19 @@ export class VendaService {
       );
 
       // 3. ADICIONA AO HISTÓRICO DO CLIENTE
-      // Usa vendaId como prefixo no ID da compra para permitir remoção
+      // Usa vendaId + índice como prefixo no ID da compra (permite múltiplos itens do mesmo produto)
       const historicoCompra: HistoricoCompra = {
-        id: `${vendaId}_item_${item.produtoId}`,
+        id: `${vendaId}_item_${index}_${item.produtoId}`,
         clienteId: data.clienteId,
         produtoNome: item.produtoNome,
         quantidade: item.quantidade,
-        valorTotal: item.subtotal,
+        valorTotal: item.subtotal,  // Valor INDIVIDUAL do item
         formaPagamento: formaPagamentoPrincipal as any,
         dataCompra: new Date(),
         enderecoEntrega: newVenda.enderecoFormatado
       };
       this.clienteService.adicionarCompra(historicoCompra);
-    }
+    });
 
     // Adiciona a venda à lista
     this.vendas.update(list => [...list, newVenda]);
@@ -310,6 +310,9 @@ export class VendaService {
   updateVenda(id: string, data: Partial<VendaFormData>): boolean {
     const vendaOriginal = this.vendas().find(v => v.id === id);
     if (!vendaOriginal) return false;
+
+    // Calcula o impacto nos valores do entregador ANTES da alteração
+    const valorEntregadorAntes = this.calcularValorParaEntregador(vendaOriginal.pagamentos);
 
     // Se os ITENS foram alterados, precisa reverter e reaplicar
     if (data.itens && data.itens.length > 0) {
@@ -333,9 +336,10 @@ export class VendaService {
       this.clienteService.removerComprasPorVenda(id);
 
       // 2. APLICA as novas alterações (APENAS ESTOQUE E HISTÓRICO)
-      for (const novoItem of data.itens) {
+      // Usa índice para garantir IDs únicos mesmo com produtos duplicados
+      data.itens.forEach((novoItem, index) => {
         const produto = this.produtoService.getProdutos()().find(p => p.id === novoItem.produtoId);
-        if (!produto) continue;
+        if (!produto) return;
 
         // Aplica novo estoque
         for (const vinculo of produto.vinculos) {
@@ -347,7 +351,7 @@ export class VendaService {
           }
         }
 
-        // Adiciona ao histórico do cliente com valores atualizados
+        // Adiciona ao histórico do cliente com valores atualizados INDIVIDUAIS
         const clienteId = data.clienteId || vendaOriginal.clienteId;
         const endereco = data.enderecoId 
           ? this.enderecoService.getEnderecoById(data.enderecoId)
@@ -355,18 +359,21 @@ export class VendaService {
         
         const formaPagamentoPrincipal = data.pagamentos?.[0]?.forma || vendaOriginal.pagamentos[0]?.forma || 'dinheiro';
         
+        // ID único por item usando índice (permite múltiplos itens do mesmo produto)
         const historicoCompra: HistoricoCompra = {
-          id: `${id}_item_${novoItem.produtoId}`,
+          id: `${id}_item_${index}_${novoItem.produtoId}`,
           clienteId: clienteId,
           produtoNome: novoItem.produtoNome,
           quantidade: novoItem.quantidade,
-          valorTotal: novoItem.subtotal,
+          valorTotal: novoItem.subtotal,  // Valor INDIVIDUAL do item (já calculado)
           formaPagamento: formaPagamentoPrincipal as any,
           dataCompra: vendaOriginal.dataVenda, // Mantém a data original da venda
           enderecoEntrega: endereco ? this.enderecoService.getEnderecoFormatado(endereco) : vendaOriginal.enderecoFormatado
         };
         this.clienteService.adicionarCompra(historicoCompra);
-      }
+        
+        console.log(`   ✓ Histórico atualizado: ${novoItem.produtoNome} - R$ ${novoItem.subtotal.toFixed(2)}`);
+      });
 
       console.log(`✅ Venda ${id} atualizada. Estoque e histórico ajustados (contadores de vendas mantidos).`);
     }
@@ -403,9 +410,28 @@ export class VendaService {
         return v;
       })
     );
+
+    // Calcula o impacto nos valores do entregador DEPOIS da alteração
+    const pagamentosNovos = data.pagamentos || vendaOriginal.pagamentos;
+    const valorEntregadorDepois = this.calcularValorParaEntregador(pagamentosNovos);
+    const diferencaEntregador = valorEntregadorDepois - valorEntregadorAntes;
+
+    // Log do impacto financeiro
+    if (Math.abs(diferencaEntregador) > 0.01) {
+      const entregadorNome = entregador?.identificador || vendaOriginal.entregadorIdentificador;
+      console.log(`💰 Impacto no caixa de ${entregadorNome}: R$ ${valorEntregadorAntes.toFixed(2)} → R$ ${valorEntregadorDepois.toFixed(2)} (${diferencaEntregador > 0 ? '+' : ''}${diferencaEntregador.toFixed(2)})`);
+    }
+
     return true;
   }
   // ========================================================================
+
+  // Método auxiliar para calcular valor para entregador (pagamentos exceto PIX)
+  private calcularValorParaEntregador(pagamentos: PagamentoVenda[]): number {
+    return pagamentos
+      .filter(p => p.forma !== 'pix')
+      .reduce((sum, p) => sum + p.valor, 0);
+  }
 
   // ===== MÉTODO MODIFICADO: Deleta venda e reverte todas as alterações =====
   deleteVenda(id: string): boolean {
