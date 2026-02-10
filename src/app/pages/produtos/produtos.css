@@ -719,6 +719,12 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+.vinculo-tag.aumenta {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16A34A;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
 .vinculo-tipo {
   font-size: 14px;
   font-weight: 700;

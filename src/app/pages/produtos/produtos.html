@@ -198,21 +198,13 @@
               </svg>
             } @else {
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
               </svg>
             }
           </div>
-          
           <div class="vendas-badge" [class.alto]="getVendasStatus(getTotalVendas(produto.id)) === 'alto'"
-                                    [class.medio]="getVendasStatus(getTotalVendas(produto.id)) === 'medio'"
-                                    [class.baixo]="getVendasStatus(getTotalVendas(produto.id)) === 'baixo'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="20" x2="12" y2="10"/>
-              <line x1="18" y1="20" x2="18" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="16"/>
-            </svg>
+                                     [class.medio]="getVendasStatus(getTotalVendas(produto.id)) === 'medio'"
+                                     [class.baixo]="getVendasStatus(getTotalVendas(produto.id)) === 'baixo'">
             {{ getTotalVendas(produto.id) }} vendas
           </div>
         </div>
@@ -286,10 +278,11 @@
             <div class="vinculos-list">
               @for (vinculo of produto.vinculos; track vinculo.variavelEstoqueId) {
                 <span class="vinculo-tag" [class.reduz]="vinculo.tipoInteracao === 'reduz'"
-                                          [class.nao-altera]="vinculo.tipoInteracao === 'nao-altera'">
+                                          [class.nao-altera]="vinculo.tipoInteracao === 'nao-altera'"
+                                          [class.aumenta]="vinculo.tipoInteracao === 'aumenta'">
                   {{ getVariavelNome(vinculo.variavelEstoqueId) }}
                   <span class="vinculo-tipo">
-                    {{ vinculo.tipoInteracao === 'reduz' ? '↓' : '=' }}
+                    {{ vinculo.tipoInteracao === 'reduz' ? '↓' : vinculo.tipoInteracao === 'aumenta' ? '↑' : '=' }}
                   </span>
                 </span>
               }
@@ -524,6 +517,7 @@
                         >
                           <option value="reduz">Reduz estoque</option>
                           <option value="nao-altera">Não altera</option>
+                          <option value="aumenta">Aumenta estoque</option>
                         </select>
                       </div>
                     </div>

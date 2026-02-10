@@ -5,7 +5,7 @@ export interface PrecoPorPagamento {
   pix: number;
 }
 
-export type TipoInteracaoEstoque = 'reduz' | 'nao-altera';
+export type TipoInteracaoEstoque = 'reduz' | 'nao-altera' | 'aumenta';
 
 export interface VinculoEstoque {
   variavelEstoqueId: string;

@@ -262,9 +262,15 @@ export class VendaService {
       if (!produto) return;
 
       // 1. REDUZ ESTOQUE das variáveis vinculadas ao produto
+      // 1. AJUSTA ESTOQUE das variáveis vinculadas ao produto
       for (const vinculo of produto.vinculos) {
         if (vinculo.tipoInteracao === 'reduz') {
           this.variavelEstoqueService.reduzirEstoque(
+            vinculo.variavelEstoqueId, 
+            item.quantidade
+          );
+        } else if (vinculo.tipoInteracao === 'aumenta') {
+          this.variavelEstoqueService.aumentarEstoque(
             vinculo.variavelEstoqueId, 
             item.quantidade
           );
@@ -324,7 +330,14 @@ export class VendaService {
         // Reverte APENAS o estoque (não mexe nos contadores de vendas)
         for (const vinculo of produto.vinculos) {
           if (vinculo.tipoInteracao === 'reduz') {
+            // Se tinha reduzido, agora aumenta de volta
             this.variavelEstoqueService.aumentarEstoque(
+              vinculo.variavelEstoqueId, 
+              itemOriginal.quantidade
+            );
+          } else if (vinculo.tipoInteracao === 'aumenta') {
+            // Se tinha aumentado, agora reduz de volta
+            this.variavelEstoqueService.reduzirEstoque(
               vinculo.variavelEstoqueId, 
               itemOriginal.quantidade
             );
@@ -345,6 +358,11 @@ export class VendaService {
         for (const vinculo of produto.vinculos) {
           if (vinculo.tipoInteracao === 'reduz') {
             this.variavelEstoqueService.reduzirEstoque(
+              vinculo.variavelEstoqueId, 
+              novoItem.quantidade
+            );
+          } else if (vinculo.tipoInteracao === 'aumenta') {
+            this.variavelEstoqueService.aumentarEstoque(
               vinculo.variavelEstoqueId, 
               novoItem.quantidade
             );
@@ -448,6 +466,12 @@ export class VendaService {
         if (vinculo.tipoInteracao === 'reduz') {
           // Se tinha reduzido, agora aumenta de volta
           this.variavelEstoqueService.aumentarEstoque(
+            vinculo.variavelEstoqueId, 
+            item.quantidade
+          );
+        } else if (vinculo.tipoInteracao === 'aumenta') {
+          // Se tinha aumentado, agora reduz de volta
+          this.variavelEstoqueService.reduzirEstoque(
             vinculo.variavelEstoqueId, 
             item.quantidade
           );
