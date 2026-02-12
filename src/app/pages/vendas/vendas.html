@@ -1306,7 +1306,7 @@
   </div>
 }
 <!-- ============================================================
-     NOVO: MODAL - CONFIRMAR RECEBIMENTO PENDENTE
+     MODAL - CONFIRMAR RECEBIMENTO PENDENTE (ATUALIZADO COM AGENDAMENTO)
      ============================================================ -->
 @if (modalType() === 'toggle-pendente' && selectedVenda()) {
   <div class="modal-overlay" (click)="closeModalBackdrop($event)">
@@ -1397,6 +1397,52 @@
             </div>
           </div>
         </div>
+
+        <!-- ============================================================
+             NOVO: AGENDAMENTO DE NOTIFICAÇÃO (apenas ao marcar como pendente)
+             ============================================================ -->
+        @if (!selectedVenda()!.recebimentoPendente) {
+          <div class="agendamento-section">
+            <label class="agendamento-toggle">
+              <input 
+                type="checkbox"
+                [checked]="agendarNotificacao()"
+                (change)="agendarNotificacao.set(!agendarNotificacao())"
+              />
+              <span class="agendamento-toggle-slider"></span>
+              <span class="agendamento-toggle-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                Agendar lembrete de cobrança
+              </span>
+            </label>
+
+            @if (agendarNotificacao()) {
+              <div class="agendamento-campos">
+                <div class="agendamento-campo">
+                  <label>Data</label>
+                  <input 
+                    type="date" 
+                    class="input-agendamento"
+                    [ngModel]="notificacaoData()"
+                    (ngModelChange)="notificacaoData.set($event)"
+                  />
+                </div>
+                <div class="agendamento-campo">
+                  <label>Hora</label>
+                  <input 
+                    type="time" 
+                    class="input-agendamento"
+                    [ngModel]="notificacaoHora()"
+                    (ngModelChange)="notificacaoHora.set($event)"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
 
       <div class="modal-footer modal-edit-footer">

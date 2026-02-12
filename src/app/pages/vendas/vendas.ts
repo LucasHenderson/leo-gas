@@ -7,7 +7,7 @@ import { EnderecoService } from '../../services/endereco.service';
 import { EntregadorService } from '../../services/entregador.service';
 import { ProdutoService } from '../../services/produto.service';
 import { Venda, VendaFormData, StatusVenda, FormaPagamento, ItemVenda, PagamentoVenda } from '../../models/venda.model';
-import { Cliente } from '../../models/cliente.model';
+import { NotificationService } from '../../services/notification.service';import { Cliente } from '../../models/cliente.model';
 import { Endereco } from '../../models/endereco.model';
 import { Entregador } from '../../models/entregador.model';
 import { Produto } from '../../models/produto.model';
@@ -27,6 +27,7 @@ export class Vendas {
   private enderecoService = inject(EnderecoService);
   private entregadorService = inject(EntregadorService);
   private produtoService = inject(ProdutoService);
+  private notificationService = inject(NotificationService);
 
   // Paginação
   currentPage = signal(1);
@@ -58,6 +59,11 @@ export class Vendas {
 
   // Controle de UI
   mostrarAdicionarProduto = signal<boolean>(false);
+
+  // Agendamento de notificação (modal pendente)
+  agendarNotificacao = signal<boolean>(false);
+  notificacaoData = signal<string>('');
+  notificacaoHora = signal<string>('');
 
   // Formulário de edição
   formData = signal<VendaFormData>({
@@ -816,21 +822,43 @@ limparFiltros() {
   }
 
   // NOVO: confirma a ação de toggle do recebimento pendente
-  confirmarTogglePendente() {
+confirmarTogglePendente() {
     const venda = this.selectedVenda();
     if (!venda) return;
 
+    // Se está marcando como pendente E o usuário quer agendar notificação
+    if (!venda.recebimentoPendente && this.agendarNotificacao() && this.notificacaoData() && this.notificacaoHora()) {
+      const dataHora = new Date(`${this.notificacaoData()}T${this.notificacaoHora()}`);
+      
+      if (dataHora > new Date()) {
+        this.notificationService.adicionarNotificacao({
+          vendaId: venda.id,
+          clienteNome: venda.clienteNome,
+          valorTotal: venda.valorTotal,
+          mensagem: `Lembrete: Recebimento pendente de ${venda.clienteNome} — ${this.formatarMoeda(venda.valorTotal)}`,
+          dataAgendada: dataHora
+        });
+      }
+    }
+
     this.vendaService.toggleRecebimentoPendente(venda.id);
+    this.resetAgendamento();
     this.closeModal();
   }
 
+  resetAgendamento() {
+    this.agendarNotificacao.set(false);
+    this.notificacaoData.set('');
+    this.notificacaoHora.set('');
+  }
   // ===== FECHAR MODAL =====
 
   closeModal() {
-    this.modalType.set(null);
-    this.selectedVenda.set(null);
-    this.resetCreateForm();
-  }
+      this.modalType.set(null);
+      this.selectedVenda.set(null);
+      this.resetCreateForm();
+      this.resetAgendamento();
+    }
 
   closeModalBackdrop(event: MouseEvent) {
     if ((event.target as HTMLElement).classList.contains('modal-overlay')) {

@@ -2607,6 +2607,120 @@
   box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
+/* ============================================
+   AGENDAMENTO DE NOTIFICAÇÃO NO MODAL PENDENTE
+   ============================================ */
+
+.agendamento-section {
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg-secondary, var(--dropdown-hover));
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.agendamento-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.agendamento-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.agendamento-toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.agendamento-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.agendamento-toggle input:checked + .agendamento-toggle-slider {
+  background: var(--primary-color, #ff9800);
+}
+
+.agendamento-toggle input:checked + .agendamento-toggle-slider::after {
+  left: 22px;
+}
+
+.agendamento-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.agendamento-campos {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  animation: fadeInDown 0.25s ease;
+}
+
+.agendamento-campo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agendamento-campo label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-agendamento {
+  padding: 10px 12px;
+  border: 2px solid var(--text-color);
+  border-radius: 8px;
+  background: var(--input-bg, var(--card-bg));
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+.input-agendamento:focus {
+  border-color: var(--primary-color, #ff9800);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ===== RESPONSIVIDADE ===== */
 
 @media (max-width: 1200px) {
