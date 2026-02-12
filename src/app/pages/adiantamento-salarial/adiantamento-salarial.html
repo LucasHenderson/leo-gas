@@ -1,1 +1,443 @@
-<p>adiantamento-salarial works!</p>
+<div class="adiantamento-page">
+  <!-- ===== HEADER ===== -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="page-title">Adiantamento Salarial</h1>
+        <p class="page-subtitle">Gerencie os gastos e adiantamentos dos entregadores</p>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <!-- Busca -->
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Buscar por nome ou identificador do entregador..."
+          [value]="searchTerm()"
+          (input)="updateSearch($event)"
+        />
+        @if (searchTerm()) {
+          <button class="clear-search" (click)="clearSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        }
+      </div>
+
+      <!-- Filtros em linha -->
+      <div class="filters-row">
+        <!-- Filtro Ativos/Inativos -->
+        <button
+          class="btn-filter"
+          [class.active]="showInactive()"
+          (click)="toggleShowInactive()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="23" y1="11" x2="17" y2="11"/>
+          </svg>
+          {{ showInactive() ? 'Todos' : 'Apenas Ativos' }}
+        </button>
+
+        <!-- Ordenação -->
+        <div class="sort-dropdown">
+          <button class="btn-filter">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="4" y1="12" x2="16" y2="12"/>
+              <line x1="4" y1="18" x2="12" y2="18"/>
+            </svg>
+            Ordenar
+          </button>
+          <div class="sort-options">
+            <button [class.active]="sortOrder() === 'nenhum'" (click)="changeSortOrder('nenhum')">Padrão</button>
+            <button [class.active]="sortOrder() === 'nome-asc'" (click)="changeSortOrder('nome-asc')">Nome A-Z</button>
+            <button [class.active]="sortOrder() === 'nome-desc'" (click)="changeSortOrder('nome-desc')">Nome Z-A</button>
+            <button [class.active]="sortOrder() === 'identificador-asc'" (click)="changeSortOrder('identificador-asc')">Identificador</button>
+            <button [class.active]="sortOrder() === 'mais-gastos'" (click)="changeSortOrder('mais-gastos')">Maior gasto</button>
+            <button [class.active]="sortOrder() === 'menos-gastos'" (click)="changeSortOrder('menos-gastos')">Menor gasto</button>
+          </div>
+        </div>
+
+        <!-- Filtro de Data -->
+        <div class="date-filter">
+          <div class="date-filter-label">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Período:
+          </div>
+          <div class="date-inputs">
+            <div class="date-input-group">
+              <label>De</label>
+              <input
+                type="date"
+                class="date-input"
+                [value]="dataInicio()"
+                (change)="updateDataInicio($event)"
+              />
+            </div>
+            <div class="date-input-group">
+              <label>Até</label>
+              <input
+                type="date"
+                class="date-input"
+                [value]="dataFim()"
+                (change)="updateDataFim($event)"
+              />
+            </div>
+            <button class="btn-clear-date" (click)="resetDateFilter()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"/>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+              </svg>
+              Mês Atual
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LISTA DE ENTREGADORES COM ADIANTAMENTOS ===== -->
+  @if (filteredEntregadores().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="23" y1="11" x2="17" y2="11"/>
+        </svg>
+      </div>
+      <h3>Nenhum entregador encontrado</h3>
+      <p>Tente ajustar os filtros de busca ou incluir inativos.</p>
+    </div>
+  }
+
+  @for (entregador of filteredEntregadores(); track entregador.id) {
+    <div class="entregador-section" [class.inactive]="!entregador.ativo">
+      <!-- Header do entregador -->
+      <div class="section-header">
+        <div class="entregador-info">
+          <div class="entregador-avatar">
+            {{ getInitials(entregador.nomeCompleto) }}
+          </div>
+          <div class="entregador-details">
+            <div class="entregador-name-row">
+              <h2 class="entregador-nome">{{ entregador.nomeCompleto }}</h2>
+              <span class="identificador-badge">{{ entregador.identificador }}</span>
+              @if (!entregador.ativo) {
+                <span class="status-badge inactive">Inativo</span>
+              }
+            </div>
+            <p class="entregador-meta">
+              {{ getAdiantamentosEntregador(entregador.id).length }} registro(s) no período
+            </p>
+          </div>
+        </div>
+        <button class="btn-add-gasto" (click)="openCreateModal(entregador.id)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Novo Gasto
+        </button>
+      </div>
+
+      <!-- Tabela de adiantamentos -->
+      @if (getAdiantamentosEntregador(entregador.id).length > 0) {
+        <div class="table-container">
+          <table class="adiantamentos-table">
+            <thead>
+              <tr>
+                <th class="col-descricao">Descrição</th>
+                <th class="col-data">Data</th>
+                <th class="col-valor">Valor</th>
+                <th class="col-acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (adiantamento of getPaginatedAdiantamentos(entregador.id); track adiantamento.id) {
+                <tr>
+                  <td class="col-descricao">
+                    <span class="descricao-text">{{ adiantamento.descricao }}</span>
+                  </td>
+                  <td class="col-data">
+                    <span class="data-text">{{ formatarData(adiantamento.data) }}</span>
+                  </td>
+                  <td class="col-valor">
+                    <span class="valor-text">{{ formatarMoeda(adiantamento.valor) }}</span>
+                  </td>
+                  <td class="col-acoes">
+                    <div class="acoes-group">
+                      <button class="btn-action btn-edit" title="Editar" (click)="openEditModal(adiantamento)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="btn-action btn-delete" title="Excluir" (click)="openDeleteModal(adiantamento)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer: Total + Paginação -->
+        <div class="section-footer">
+          <!-- Total -->
+          <div class="total-gastos">
+            <span class="total-label">Total no período:</span>
+            <span class="total-valor">{{ formatarMoeda(getTotalGastos(entregador.id)) }}</span>
+          </div>
+
+          <!-- Paginação -->
+          @if (getTotalPages(entregador.id) > 1) {
+            <div class="pagination">
+              <button
+                class="pagination-btn"
+                [disabled]="getCurrentPage(entregador.id) === 1"
+                (click)="previousPage(entregador.id)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+
+              @for (page of getPages(entregador.id); track page) {
+                <button
+                  class="pagination-btn"
+                  [class.active]="getCurrentPage(entregador.id) === page"
+                  (click)="goToPage(entregador.id, page)"
+                >
+                  {{ page }}
+                </button>
+              }
+
+              <button
+                class="pagination-btn"
+                [disabled]="getCurrentPage(entregador.id) === getTotalPages(entregador.id)"
+                (click)="nextPage(entregador.id)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-list">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+          <p>Nenhum gasto registrado neste período.</p>
+          <button class="btn-add-inline" (click)="openCreateModal(entregador.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Adicionar Gasto
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ===== MODAL CRIAR / EDITAR ===== -->
+  @if (modalType() === 'create' || modalType() === 'edit') {
+    <div class="modal-overlay" (click)="closeModalBackdrop($event)">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">
+            {{ modalType() === 'create' ? 'Novo Gasto' : 'Editar Gasto' }}
+          </h2>
+          <button class="btn-close" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Info do entregador -->
+          <div class="modal-entregador-info">
+            <div class="modal-avatar">
+              {{ getInitials(getEntregadorNome(selectedEntregadorId())) }}
+            </div>
+            <div>
+              <span class="modal-entregador-nome">{{ getEntregadorNome(selectedEntregadorId()) }}</span>
+              <span class="modal-entregador-id">{{ getEntregadorIdentificador(selectedEntregadorId()) }}</span>
+            </div>
+          </div>
+
+          <form class="form-gasto" (submit)="$event.preventDefault(); saveAdiantamento()">
+            <!-- Descrição -->
+            <div class="form-group">
+              <label for="descricao">Descrição</label>
+              <input
+                id="descricao"
+                type="text"
+                class="form-input"
+                [class.error]="formErrors().descricao"
+                placeholder="Ex: Combustível, Almoço, Manutenção..."
+                [value]="formData().descricao"
+                (input)="updateFormDescricao($event)"
+              />
+              @if (formErrors().descricao) {
+                <span class="form-error">{{ formErrors().descricao }}</span>
+              }
+            </div>
+
+            <!-- Data e Valor lado a lado -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="data">Data</label>
+                <input
+                  id="data"
+                  type="date"
+                  class="form-input"
+                  [class.error]="formErrors().data"
+                  [value]="getDateInputValue(formData().data)"
+                  (change)="updateFormData($event)"
+                />
+                @if (formErrors().data) {
+                  <span class="form-error">{{ formErrors().data }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="valor">Valor (R$)</label>
+                <input
+                  id="valor"
+                  type="number"
+                  class="form-input"
+                  [class.error]="formErrors().valor"
+                  placeholder="0,00"
+                  step="0.01"
+                  min="0"
+                  [value]="formData().valor || ''"
+                  (input)="updateFormValor($event)"
+                />
+                @if (formErrors().valor) {
+                  <span class="form-error">{{ formErrors().valor }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" (click)="closeModal()">
+                Cancelar
+              </button>
+              <button type="submit" class="btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {{ modalType() === 'create' ? 'Cadastrar' : 'Salvar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== MODAL CONFIRMAR EXCLUSÃO ===== -->
+  @if (modalType() === 'delete' && selectedAdiantamento()) {
+    <div class="modal-overlay" (click)="closeModalBackdrop($event)">
+      <div class="modal-content modal-delete">
+        <div class="modal-header modal-header-delete">
+          <h2 class="modal-title">Excluir Gasto</h2>
+          <button class="btn-close" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body modal-delete-body">
+          <!-- Ícone de alerta -->
+          <div class="delete-warning-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+
+          <h3 class="delete-title">Tem certeza que deseja excluir?</h3>
+
+          <!-- Info do item -->
+          <div class="delete-info-card">
+            <div class="delete-info-row">
+              <span class="delete-info-label">Entregador</span>
+              <span class="delete-info-value">{{ getEntregadorNome(selectedEntregadorId()) }}</span>
+            </div>
+            <div class="delete-info-divider"></div>
+            <div class="delete-info-row">
+              <span class="delete-info-label">Descrição</span>
+              <span class="delete-info-value">{{ selectedAdiantamento()!.descricao }}</span>
+            </div>
+            <div class="delete-info-divider"></div>
+            <div class="delete-info-row">
+              <span class="delete-info-label">Data</span>
+              <span class="delete-info-value">{{ formatarData(selectedAdiantamento()!.data) }}</span>
+            </div>
+            <div class="delete-info-divider"></div>
+            <div class="delete-info-row">
+              <span class="delete-info-label">Valor</span>
+              <span class="delete-info-value valor-destaque-delete">{{ formatarMoeda(selectedAdiantamento()!.valor) }}</span>
+            </div>
+          </div>
+
+          <div class="delete-warning-banner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Esta ação não pode ser desfeita.</span>
+          </div>
+        </div>
+
+        <div class="modal-actions modal-actions-delete">
+          <button type="button" class="btn-secondary" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"/>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+            </svg>
+            Excluir Gasto
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
